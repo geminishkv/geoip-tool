@@ -4,6 +4,8 @@ set -euo pipefail
 API_BASE="http://ip-api.com/json"
 DEFAULT_LANG="ru"
 CACHE_DIR="${HOME}/.cache/geoip-tool"
+PROVIDER_DEFAULT="${GEOIP_PROVIDER:-ip-api}"
+PROVIDER="$PROVIDER_DEFAULT"
 
 mkdir -p "$CACHE_DIR"
 
@@ -109,6 +111,14 @@ ipapi_request_with_cache() {
     cache_put "$query" "$lang" "$body"
   fi
   printf '%s\n' "$body"
+}
+
+providers_list() {
+  cat <<EOF
+Supported providers:
+  - ip-api      (default)  http://ip-api.com/json/<query>  (free: 45 req/min, HTTP only) 
+  - ipapi-co              https://ipapi.co/<ip>/json/
+EOF
 }
 
 main() {

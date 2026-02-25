@@ -12,19 +12,23 @@
 ***
 
 <br>Салют :wave:,</br>
+Этот проект является мини‑утилитой для GeoIP‑lookup из терминала и обогащения данных как плагина для BurpSuit, на сейчас это пока костыльный вариант, который будут допиливаться далее. Работает через `curl + jq` и бесплатный API **ip-api.com** (без ключа).
 
 ## **Возможности**
 
-* geoip json 1.1.1.1 | jq '.' - для JSON формата
-* geoip file examples/ips.txt - на таргет
-* geoip http 1.2.3.4 - методы
-* geoip http target.example.com - на таргет методы
-* кэш  ~/.cache/geoip-tool  с JSON по IP
+* GeoIP lookup (pretty) по IP/ домену или по вашему текущему IP
+* JSON‑режим для пайплайнов
+* Батч‑режим по списку целей из файла
+* Режим чекапа `http`: пробует методы `GET/ POST/ PUT/ DELETE/ HEAD/ OPTIONS/ TRACE`. Если на цели нет сервиса, либо порт 80 закрыт, то curl вернёт ошибку соединения
+* Кэширование ответов в `~/.cache/geoip-tool` (уменьшает количество запросов к API):
 
-- добавляет вкладку `GeoIP` в Message Editor;
-- для каждого HTTP-запроса берет host;
-- вызывает локальную утилиту `geoip json <host>`;
-- отображает ответ (JSON) во вкладке.
+> - Хранится в `~/.cache/geoip-tool` - JSON‑файлы по ключу target и lang
+> - TTL кэша задаётся в `geoip_core.sh` (CACHE_TTL_SEC)
+
+* Интеграция с Burp Suite через расширение: вкладка `GeoIP` для запросов, данные берутся через локальную команду `geoip json`
+
+> - BurpSuit - Extender - Options - Python Environment - укажите путь к JAR
+> - Extensions - Add: Extension type: Python - Extension file: examples/burp-extension/GeoIpTab.py
 
 * Чтобы не тянуть ip-api напрямую из Burp (TLS, ToS, лимиты и пр.), делаем так:
 
@@ -76,34 +80,25 @@ $ sudo make install
 $ bash <(curl -fsSL https://raw.githubusercontent.com/geminishkv/geoip-tool/main/bin/geoip) lookup 8.8.8.8
 ```
 
-### Manual workflow
+### Manual
+
+```bash
+$ geoip json 1.1.1.1 | jq '.' # для JSON формата
+$ geoip file examples/ips.txt # на таргет
+$ geoip http 1.2.3.4 # методы
+$ geoip http target.example.com # на таргет методы
+```
+
 
 ***
 
 ## **Troubleshooting**
 
-С точки зрения безопасности и юридики:
-
-- Не дергаем ip-api напрямую из Burp/DAST:  
-  вся логика общения с внешним сервисом сосредоточена в CLI‑утилите `geoip`.
-- Есть:
-  - кэш с TTL (уменьшает нагрузку и риск выбить лимиты);  
-  - логирование заголовков X-Rl/X-Ttl (можно отслеживать лимит);[1]
-  - явное описание ограничений ip-api в README и примерах;[2]
-  - мягкий троттлинг в батч‑режиме.
-- Проект разделен на модули (`lib/…`), что упрощает дальнейшее развитие и ревью кода.
-
-Такой подход:
-
-- безопасен (нет лишних внешних запросов из Burp, всё прозрачно через локальный процесс);  
-- юридически чище (пользователь явно видит ToS/лимиты в README);  
-- удобен для дальнейшего расширения (можно добавить другие GeoIP‑провайдеры или переключатель).
-
-Если хочешь, могу дополнительно:
-
-- добавить флаг `--provider` (на будущее — для других сервисов);  
-- сделать небольшой `tests/` с простыми bash‑тестами (проверка парсинга кэша, работы модулей без реального HTTP).
-
+* Не дергаем ip-api напрямую из Burp/DAST, так как вся логика общения с внешним сервисом сосредоточена в CLI‑утилите `geoip`
+* Кэш с TTL (уменьшает нагрузку и риск выбить лимиты)
+* Логирование заголовков X-Rl/X-Ttl (можно отслеживать лимит)
+* Явное описание ограничений ip-api в README и примерах
+* Троттлинг
 
 ***
 
@@ -111,7 +106,31 @@ $ bash <(curl -fsSL https://raw.githubusercontent.com/geminishkv/geoip-tool/main
 
 ```bash
 .
-
+├── assets
+│   ├── docs
+│   │   ├── integrations.md
+│   │   ├── kategory.md
+│   │   ├── manual.md
+│   │   ├── metrics.md
+│   │   ├── patterns.md
+│   │   └── ruleset.md
+│   └── logotypemd.jpg
+├── bin
+│   └── geoip
+├── CONTRIBUTING.md
+├── examples
+│   ├── burp-extension
+│   │   └── GeoIpTab.py
+│   └── ips.txt
+├── lib
+│   ├── geoip_core.sh
+│   ├── geoip_http.sh
+│   └── geoip_lookup.sh
+├── LICENSE.md
+├── Makefile
+├── NOTICE.md
+├── README.md
+└── SECURITY.md
 ```
 
 ## Ограничения и юридическая информация
@@ -133,7 +152,9 @@ $ bash <(curl -fsSL https://raw.githubusercontent.com/geminishkv/geoip-tool/main
 
 ## **Refs**
 
-* 
+* [ip-api JSON API docs](https://ip-api.com/docs/api:json)
+* [Rate limit headers X-Rl / X-Ttl](https://ip-api.com/docs/unban)
+* [ip-api ToS / Privacy Policy (free usage terms)](https://ip-api.com/docs/legal)
 
 ***
 
