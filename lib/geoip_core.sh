@@ -18,7 +18,7 @@ geoip - утилита для GeoIP-lookup и проверки IP
   lookup [IP|host]     GeoIP по IP/ домену (pretty, по умолчанию)
   json   [IP|host]     JSON для пайплайнов
   file   <file>        Lookup по списку IP/ хостов
-  http   <IP|host]     Тест HTTP-методов (GET, POST, PUT, DELETE, HEAD, OPTIONS, TRACE)
+  http   <IP|host>     Тест HTTP-методов (GET, POST, PUT, DELETE, HEAD, OPTIONS, TRACE)
   help                 Показать справку
 
 Примеры:

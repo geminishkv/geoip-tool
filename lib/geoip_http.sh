@@ -16,13 +16,12 @@ cmd_http() {
   for method in GET POST PUT DELETE HEAD OPTIONS TRACE; do
     echo "===== $method ====="
     if [[ "$method" == "HEAD" ]]; then
-      # показываем код возврата curl при ошибке
       if ! curl -s -o /dev/null -D - -X HEAD "$url"; then
-        echo "Ошибка запроса (curl exit code $?)"
+        echo "Ошибка запроса (HEAD)"
       fi
     else
       if ! curl -s -o /dev/null -D - -X "$method" "$url"; then
-        echo "Ошибка запроса (curl exit code $?)"
+        echo "Ошибка запроса ($method)"
       fi
     fi
     echo
