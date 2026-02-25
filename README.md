@@ -69,17 +69,17 @@ fi
 #### GHCR
 
 ```bash
-docker run --rm ghcr.io/geminishkv/geoip-tool:v0.1.2 --help
-docker run --rm ghcr.io/geminishkv/geoip-tool:v0.1.2 lookup 8.8.8.8
-docker run --rm -e GEOIP_PROVIDER=ipapi-co ghcr.io/geminishkv/geoip-tool:v0.1.2 json 1.1.1.1
+docker run --rm ghcr.io/geminishkv/geoip-tool:v0.1.6 --help
+docker run --rm ghcr.io/geminishkv/geoip-tool:v0.1.6 lookup 8.8.8.8
+docker run --rm -e GEOIP_PROVIDER=ipapi-co ghcr.io/geminishkv/geoip-tool:v0.1.6 json 1.1.1.1
 ```
 
 #### GitHub Release
 
 ```bash
-$ curl -L https://github.com/geminishkv/geoip-tool/archive/refs/tags/v0.1.0.tar.gz -o geoip-tool-v0.1.0.tar.gz
-$ tar xzf geoip-tool-v0.1.0.tar.gz
-$ cd geoip-tool-0.1.0
+$ curl -L https://github.com/geminishkv/geoip-tool/archive/refs/tags/v0.1.6.tar.gz -o geoip-tool-v0.1.6.tar.gz
+$ tar xzf geoip-tool-v0.1.6.tar.gz
+$ cd geoip-tool-0.1.6
 $ sudo make install
 ```
 
