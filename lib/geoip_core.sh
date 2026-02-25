@@ -1,34 +1,51 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_BASE="http://ip-api.com/json"
 DEFAULT_LANG="ru"
 CACHE_DIR="${HOME}/.cache/geoip-tool"
+CACHE_TTL_SEC=3600
+
 PROVIDER_DEFAULT="${GEOIP_PROVIDER:-ip-api}"
 PROVIDER="$PROVIDER_DEFAULT"
 
 mkdir -p "$CACHE_DIR"
 
 usage() {
-  cat <<EOF
-geoip - утилита для GeoIP-lookup и проверки IP
+  cat <<'EOF'
+geoip - утилита для GeoIP-lookup и проверки целей
 
 Использование:
-  geoip [команда] [аргументы]
+  geoip [--provider NAME] [команда] [аргументы]
+  geoip --providers
+
+Глобальные опции:
+  --providers                 Показать список провайдеров
+  --provider NAME             Выбрать провайдера (по умолчанию ip-api)
+  --provider=NAME             Выбрать провайдера (по умолчанию ip-api)
+  -h, --help                  Справка
 
 Команды:
-  lookup [IP|host]     GeoIP по IP/ домену (pretty, по умолчанию)
-  json   [IP|host]     JSON для пайплайнов
-  file   <file>        Lookup по списку IP/ хостов
-  http   <IP|host>     Тест HTTP-методов (GET, POST, PUT, DELETE, HEAD, OPTIONS, TRACE)
-  help                 Показать справку
+  lookup [IP|host]            GeoIP (pretty, по умолчанию)
+  json   [IP|host]            JSON для пайплайнов
+  file   <file>               Lookup по списку IP/хостов
+  http   <target> [опции]     HTTP-методы (см. geoip http --help)
+  help                        Показать справку
 
 Примеры:
   geoip
   geoip lookup 8.8.8.8
-  geoip json cloudflare.com
+  geoip json cloudflare.com | jq .
   geoip file examples/ips.txt
-  geoip http 1.2.3.4
+  geoip --provider ipapi-co lookup 8.8.8.8
+  geoip http target.example.com --https --aggressive
+EOF
+}
+
+providers_list() {
+  cat <<'EOF'
+Supported providers:
+  ip-api     (default)  http://ip-api.com/json/<query>   (free: 45 req/min, HTTP only, X-Rl/X-Ttl headers)
+  ipapi-co              https://ipapi.co/<query>/json/   (usually HTTPS)
 EOF
 }
 
@@ -37,13 +54,12 @@ _cache_key() {
   echo "${key//[^A-Za-z0-9._-]/_}"
 }
 
-CACHE_TTL_SEC=3600
-
 cache_get() {
   local query="$1"
   local lang="${2:-$DEFAULT_LANG}"
   local key file
-  key=$(_cache_key "${query:-_self_}_${lang}")
+
+  key=$(_cache_key "${PROVIDER}_${query:-_self_}_${lang}")
   file="${CACHE_DIR}/${key}.json"
 
   if [[ -f "$file" ]]; then
@@ -64,21 +80,14 @@ cache_put() {
   local lang="${2:-$DEFAULT_LANG}"
   local body="$3"
   local key file
-  key=$(_cache_key "${query:-_self_}_${lang}")
+
+  key=$(_cache_key "${PROVIDER}_${query:-_self_}_${lang}")
   file="${CACHE_DIR}/${key}.json"
   printf '%s\n' "$body" >"$file"
 }
 
-_ipapi_request_raw() {
-  local query="${1:-}"
-  local lang="${2:-$DEFAULT_LANG}"
-
-  local url
-  if [[ -z "$query" ]]; then
-    url="$API_BASE/?lang=$lang"
-  else
-    url="$API_BASE/$query?lang=$lang"
-  fi
+_http_get_with_headers() {
+  local url="$1"
 
   local response headers body
   response=$(curl -s -D - "$url")
@@ -88,15 +97,46 @@ _ipapi_request_raw() {
   local remaining ttl
   remaining=$(printf '%s\n' "$headers" | awk 'BEGIN{RS="\r\n"} /^X-Rl:/ {print $2}' || true)
   ttl=$(printf '%s\n' "$headers" | awk 'BEGIN{RS="\r\n"} /^X-Ttl:/ {print $2}' || true)
-
   if [[ -n "$remaining" || -n "$ttl" ]]; then
-    >&2 echo "[ip-api] X-Rl=${remaining:-?} X-Ttl=${ttl:-?}"
+    >&2 echo "[rate] X-Rl=${remaining:-?} X-Ttl=${ttl:-?}"
   fi
 
   printf '%s\n' "$body"
 }
 
-ipapi_request_with_cache() {
+provider_request_raw() {
+  local query="${1:-}"
+  local lang="${2:-$DEFAULT_LANG}"
+
+  case "$PROVIDER" in
+    ip-api)
+      local url
+      if [[ -z "$query" ]]; then
+        url="http://ip-api.com/json/?lang=$lang"
+      else
+        url="http://ip-api.com/json/$query?lang=$lang"
+      fi
+      _http_get_with_headers "$url"
+      ;;
+
+    ipapi-co)
+      local url
+      if [[ -z "$query" ]]; then
+        url="https://ipapi.co/json/"
+      else
+        url="https://ipapi.co/$query/json/"
+      fi
+      _http_get_with_headers "$url"
+      ;;
+
+    *)
+      echo "ERROR: unknown provider '$PROVIDER' (см. --providers)" >&2
+      return 2
+      ;;
+  esac
+}
+
+provider_request_with_cache() {
   local query="${1:-}"
   local lang="${2:-$DEFAULT_LANG}"
 
@@ -106,22 +146,45 @@ ipapi_request_with_cache() {
   fi
 
   local body
-  body=$(_ipapi_request_raw "$query" "$lang")
-  if echo "$body" | jq -e '.status == "success"' >/dev/null 2>&1; then
+  body=$(provider_request_raw "$query" "$lang")
+
+  if echo "$body" | jq -e 'type=="object"' >/dev/null 2>&1; then
     cache_put "$query" "$lang" "$body"
   fi
+
   printf '%s\n' "$body"
 }
 
-providers_list() {
-  cat <<EOF
-Supported providers:
-  - ip-api      (default)  http://ip-api.com/json/<query>  (free: 45 req/min, HTTP only) 
-  - ipapi-co              https://ipapi.co/<ip>/json/
-EOF
-}
-
 main() {
+  while [[ "${1:-}" == --* ]]; do
+    case "$1" in
+      --providers)
+        providers_list
+        return 0
+        ;;
+      --provider)
+        shift || true
+        PROVIDER="${1:-}"
+        if [[ -z "$PROVIDER" ]]; then
+          echo "ERROR: --provider требует имя (см. --providers)" >&2
+          return 2
+        fi
+        ;;
+      --provider=*)
+        PROVIDER="${1#*=}"
+        ;;
+      --help|-h)
+        usage
+        return 0
+        ;;
+      *)
+        echo "ERROR: unknown option '$1' (см. --help)" >&2
+        return 2
+        ;;
+    esac
+    shift || true
+  done
+
   local cmd="${1:-lookup}"
   shift || true
 

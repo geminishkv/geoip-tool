@@ -1,4 +1,4 @@
-<div align="center"><h1><a id="intro"> GeoIP-lookup check for IP.  </a><br></h1></div>
+<div align="center"><h1><a id="intro"> GeoIP-lookup check for IP </a><br></h1></div>
 
 ![Repo Size](https://img.shields.io/github/repo-size/geminishkv/geoip-tool)
 ![License](https://img.shields.io/github/license/geminishkv/geoip-tool)
@@ -12,11 +12,11 @@
 ***
 
 <br>Салют :wave:,</br>
-Этот проект является мини‑утилитой для GeoIP‑lookup из терминала и обогащения данных как плагина для BurpSuit, на сейчас это пока костыльный вариант, который будут допиливаться далее. Работает через `curl + jq` и бесплатный API **ip-api.com** (без ключа).
+Этот проект является мини‑утилитой для GeoIP‑lookup из терминала и обогащения данных как плагина для BurpSuit, на сейчас это пока костыльный вариант, который будут допиливаться далее. Работает через `curl + jq` и бесплатный API **ip-api.com** (без ключа), а также с ipapi-co провайдером.
 
 ## **Возможности**
 
-* GeoIP lookup (pretty) по IP/ домену или по вашему текущему IP
+* GeoIP lookup (pretty) по IP/ домену или по вашему текущему IP (включая ipapi-co)
 * JSON‑режим для пайплайнов
 * Батч‑режим по списку целей из файла
 * Режим чекапа `http`: пробует методы `GET/ POST/ PUT/ DELETE/ HEAD/ OPTIONS/ TRACE`. Если на цели нет сервиса, либо порт 80 закрыт, то curl вернёт ошибку соединения
@@ -30,6 +30,11 @@
 > - BurpSuit - Extender - Options - Python Environment - укажите путь к JAR
 > - Extensions - Add: Extension type: Python - Extension file: examples/burp-extension/GeoIpTab.py
 
+* Не дергаем ip-api напрямую из Burp/DAST, так как вся логика общения с внешним сервисом сосредоточена в CLI‑утилите `geoip`
+* Кэш с TTL (уменьшает нагрузку и риск выбить лимиты)
+* Логирование заголовков X-Rl/X-Ttl (можно отслеживать лимит)
+* Явное описание ограничений ip-api в README и примерах
+* Троттлинг
 * Чтобы не тянуть ip-api напрямую из Burp (TLS, ToS, лимиты и пр.), делаем так:
 
 > - Jython‑расширение в Burp
@@ -87,18 +92,9 @@ $ geoip json 1.1.1.1 | jq '.' # для JSON формата
 $ geoip file examples/ips.txt # на таргет
 $ geoip http 1.2.3.4 # методы
 $ geoip http target.example.com # на таргет методы
+$ geoip --provider ipapi-co json <ip>
+
 ```
-
-
-***
-
-## **Troubleshooting**
-
-* Не дергаем ip-api напрямую из Burp/DAST, так как вся логика общения с внешним сервисом сосредоточена в CLI‑утилите `geoip`
-* Кэш с TTL (уменьшает нагрузку и риск выбить лимиты)
-* Логирование заголовков X-Rl/X-Ttl (можно отслеживать лимит)
-* Явное описание ограничений ip-api в README и примерах
-* Троттлинг
 
 ***
 
