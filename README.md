@@ -117,17 +117,14 @@ $ geoip http example.com --methods GET,HEAD,OPTIONS,TRACE
 ```bash
 .
 ├── assets
-│   ├── docs
-│   │   ├── integrations.md
-│   │   ├── kategory.md
-│   │   ├── manual.md
-│   │   ├── metrics.md
-│   │   ├── patterns.md
-│   │   └── ruleset.md
+│   ├── exmpl.jpg
+│   ├── help.jpg
+│   ├── http_help.jpg
 │   └── logotypemd.jpg
 ├── bin
 │   └── geoip
 ├── CONTRIBUTING.md
+├── Dockerfile
 ├── examples
 │   ├── burp-extension
 │   │   └── GeoIpTab.py
