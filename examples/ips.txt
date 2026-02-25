@@ -1,0 +1,14 @@
+1.1.1.1
+8.8.8.8
+9.9.9.9
+208.67.222.222
+185.199.109.153 # github.com
+151.101.1.69 # stackoverflow.com
+104.16.132.229 # cloudflare (один из)
+cloudflare.com
+google.com
+github.com
+yandex.ru
+ya.ru
+microsoft.com
+mozilla.org
