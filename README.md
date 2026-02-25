@@ -69,9 +69,9 @@ fi
 #### GHCR
 
 ```bash
-docker run --rm ghcr.io/geminishkv/geoip-tool:v0.1.0 --help
-docker run --rm ghcr.io/geminishkv/geoip-tool:v0.1.0 lookup 8.8.8.8
-docker run --rm -e GEOIP_PROVIDER=ipapi-co ghcr.io/geminishkv/geoip-tool:v0.1.0 json 1.1.1.1
+docker run --rm ghcr.io/geminishkv/geoip-tool:v0.1.2 --help
+docker run --rm ghcr.io/geminishkv/geoip-tool:v0.1.2 lookup 8.8.8.8
+docker run --rm -e GEOIP_PROVIDER=ipapi-co ghcr.io/geminishkv/geoip-tool:v0.1.2 json 1.1.1.1
 ```
 
 #### GitHub Release
