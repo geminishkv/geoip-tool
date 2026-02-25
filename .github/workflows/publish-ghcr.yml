@@ -18,6 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Debug workspace
+        run: |
+            pwd
+            ls -la
+            ls -la Dockerfile || true
+            find . -maxdepth 3 -iname 'dockerfile' -print
+            echo "ref=${GITHUB_REF} sha=${GITHUB_SHA}"
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
