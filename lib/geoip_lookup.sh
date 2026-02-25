@@ -37,21 +37,19 @@ cmd_lookup() {
              else "Неизвестно" end)
         end'
       ;;
-
     ipapi-co)
       echo "$body" | jq -r '
         "IP:        \(.ip // "-")",
         "Страна:    \(.country_name // "-") (\(.country // "-"))",
         "Регион:    \(.region // "-")",
         "Город:     \(.city // "-")",
-        "Оператор:  \(.org // "-")",
+        "Организация: \(.org // "-")",
         "ASN:       \(.asn // "-")",
         "Координаты:\(.latitude // 0), \(.longitude // 0)",
         "Зона:      \(.timezone // "-")",
         "Почтовый:  \(.postal // "-")"
       '
       ;;
-
     *)
       echo "ERROR: unknown provider '$PROVIDER' (см. --providers)" >&2
       return 2

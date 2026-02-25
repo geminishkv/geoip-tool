@@ -15,37 +15,36 @@ usage() {
 geoip - утилита для GeoIP-lookup и проверки целей
 
 Использование:
-  geoip [--provider NAME] [команда] [аргументы]
+  geoip [--provider NAME] <command> [args...]
   geoip --providers
+  geoip --help
 
 Глобальные опции:
-  --providers                 Показать список провайдеров
-  --provider NAME             Выбрать провайдера (по умолчанию ip-api)
-  --provider=NAME             Выбрать провайдера (по умолчанию ip-api)
-  -h, --help                  Справка
+  --providers              Показать список провайдеров
+  --provider NAME          Выбрать провайдера (по умолчанию ip-api)
+  --provider=NAME          Выбрать провайдера (по умолчанию ip-api)
+  -h, --help               Справка
 
 Команды:
-  lookup [IP|host]            GeoIP (pretty, по умолчанию)
-  json   [IP|host]            JSON для пайплайнов
-  file   <file>               Lookup по списку IP/хостов
-  http   <target> [опции]     HTTP-методы (см. geoip http --help)
-  help                        Показать справку
+  lookup [IP|host]         GeoIP (pretty). Если без аргумента — для текущего IP
+  json   [IP|host]         Сырой JSON (удобно для jq/ пайплайнов)
+  file   <file>            Батч-lookup (по строке IP/ host на строку)
+  http   [opts] <target>   Пробинг HTTP-методов (см. geoip http --help)
+  help                     Показать справку
 
 Примеры:
-  geoip
   geoip lookup 8.8.8.8
-  geoip json cloudflare.com | jq .
-  geoip file examples/ips.txt
+  geoip json 1.1.1.1 | jq .
   geoip --provider ipapi-co lookup 8.8.8.8
-  geoip http target.example.com --https --aggressive
+  geoip http --help
 EOF
 }
 
 providers_list() {
   cat <<'EOF'
 Supported providers:
-  ip-api     (default)  http://ip-api.com/json/<query>   (free: 45 req/min, HTTP only, X-Rl/X-Ttl headers)
-  ipapi-co              https://ipapi.co/<query>/json/   (usually HTTPS)
+  ip-api     (default)  http://ip-api.com/json/<query>?lang=...
+  ipapi-co              https://ipapi.co/<query>/json/
 EOF
 }
 
@@ -58,7 +57,6 @@ cache_get() {
   local query="$1"
   local lang="${2:-$DEFAULT_LANG}"
   local key file
-
   key=$(_cache_key "${PROVIDER}_${query:-_self_}_${lang}")
   file="${CACHE_DIR}/${key}.json"
 
@@ -80,7 +78,6 @@ cache_put() {
   local lang="${2:-$DEFAULT_LANG}"
   local body="$3"
   local key file
-
   key=$(_cache_key "${PROVIDER}_${query:-_self_}_${lang}")
   file="${CACHE_DIR}/${key}.json"
   printf '%s\n' "$body" >"$file"
@@ -118,7 +115,6 @@ provider_request_raw() {
       fi
       _http_get_with_headers "$url"
       ;;
-
     ipapi-co)
       local url
       if [[ -z "$query" ]]; then
@@ -128,7 +124,6 @@ provider_request_raw() {
       fi
       _http_get_with_headers "$url"
       ;;
-
     *)
       echo "ERROR: unknown provider '$PROVIDER' (см. --providers)" >&2
       return 2

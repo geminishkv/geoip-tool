@@ -30,21 +30,8 @@
 > - BurpSuit - Extender - Options - Python Environment - укажите путь к JAR
 > - Extensions - Add: Extension type: Python - Extension file: examples/burp-extension/GeoIpTab.py
 
-* Не дергаем ip-api напрямую из Burp/DAST, так как вся логика общения с внешним сервисом сосредоточена в CLI‑утилите `geoip`
-* Кэш с TTL (уменьшает нагрузку и риск выбить лимиты)
 * Логирование заголовков X-Rl/X-Ttl (можно отслеживать лимит)
-* Явное описание ограничений ip-api в README и примерах
 * Троттлинг
-* Чтобы не тянуть ip-api напрямую из Burp (TLS, ToS, лимиты и пр.), делаем так:
-
-> - Jython‑расширение в Burp
-> - перехватывает хосты из HTTP‑трафика;
-> - вызывает локальную утилиту  geoip json <host>  как подпроцесс;
-> - читает JSON из stdout;
-> - показывает результат в отдельной вкладке «GeoIP» для выбранного запроса.
-> - вся ответственность за взаимодействие с ip-api лежит на  geoip ;
-> - кэш и лимиты контролируются в одном месте.
-
 * Заголовки X-Rl и X-Ttl (для контроля лимитов в Burp) в stderr `_ipapi_request_raw`:
 
 ```bash
@@ -55,6 +42,23 @@ if [[ -n "$remaining" || -n "$ttl" ]]; then
   >&2 echo "[ip-api] X-Rl=${remaining:-?} X-Ttl=${ttl:-?}"
 fi
 ```
+
+***
+
+## Материалы
+
+### Основной список команд
+
+
+![help](assets/help.jpg)
+
+### Cписок команд http
+
+![http_help](assets/http_help.jpg)
+
+### Пример с http
+
+![http_exmpl](assets/exmpl.jpg)
 
 ***
 
@@ -90,10 +94,12 @@ $ bash <(curl -fsSL https://raw.githubusercontent.com/geminishkv/geoip-tool/main
 ```bash
 $ geoip json 1.1.1.1 | jq '.' # для JSON формата
 $ geoip file examples/ips.txt # на таргет
-$ geoip http 1.2.3.4 # методы
-$ geoip http target.example.com # на таргет методы
 $ geoip --provider ipapi-co json <ip>
-
+$ geoip http example.com
+$ geoip http example.com --path /admin
+$ geoip http example.com --https --follow
+$ geoip http example.com --auto --aggressive
+$ geoip http example.com --methods GET,HEAD,OPTIONS,TRACE
 ```
 
 ***
