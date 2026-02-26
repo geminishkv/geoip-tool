@@ -6,5 +6,7 @@ BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$BASE_DIR/lib/geoip_core.sh"
 source "$BASE_DIR/lib/geoip_lookup.sh"
 source "$BASE_DIR/lib/geoip_http.sh"
+source "$BASE_DIR/lib/geoip_reverse.sh"
+source "$BASE_DIR/lib/geoip_nmap.sh"
 
 main "$@"

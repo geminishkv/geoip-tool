@@ -4,9 +4,12 @@ set -euo pipefail
 DEFAULT_LANG="ru"
 CACHE_DIR="${HOME}/.cache/geoip-tool"
 CACHE_TTL_SEC=3600
+MAX_RETRIES=3
+DEFAULT_RETRY_AFTER=5
 
 PROVIDER_DEFAULT="${GEOIP_PROVIDER:-ip-api}"
 PROVIDER="$PROVIDER_DEFAULT"
+OUTPUT_FILE=""
 
 mkdir -p "$CACHE_DIR"
 
@@ -15,7 +18,7 @@ usage() {
 geoip - утилита для GeoIP-lookup и проверки целей
 
 Использование:
-  geoip [--provider NAME] <command> [args...]
+  geoip [--provider NAME] [--output FILE] <command> [args...]
   geoip --providers
   geoip --help
 
@@ -23,6 +26,7 @@ geoip - утилита для GeoIP-lookup и проверки целей
   --providers              Показать список провайдеров
   --provider NAME          Выбрать провайдера (по умолчанию ip-api)
   --provider=NAME          Выбрать провайдера (по умолчанию ip-api)
+  --output FILE, -o FILE   Сохранить вывод в файл (stdout дублируется)
   -h, --help               Справка
 
 Команды:
@@ -30,6 +34,8 @@ geoip - утилита для GeoIP-lookup и проверки целей
   json   [IP|host]         Сырой JSON (удобно для jq/ пайплайнов)
   file   <file>            Батч-lookup (по строке IP/ host на строку)
   http   [opts] <target>   Пробинг HTTP-методов (см. geoip http --help)
+  reverse [opts] <IP>      Reverse IP lookup — домены на IP (см. geoip reverse --help)
+  scan    [opts] <target>  nmap-сканирование портов (требует nmap, см. geoip scan --help)
   help                     Показать справку
 
 Примеры:
@@ -37,6 +43,8 @@ geoip - утилита для GeoIP-lookup и проверки целей
   geoip json 1.1.1.1 | jq .
   geoip --provider ipapi-co lookup 8.8.8.8
   geoip http --help
+  geoip reverse 8.8.8.8
+  geoip scan --top-ports 10 8.8.8.8
 EOF
 }
 
@@ -63,7 +71,7 @@ cache_get() {
   if [[ -f "$file" ]]; then
     local now ts age
     now=$(date +%s)
-    ts=$(stat -c %Y "$file" 2>/dev/null || echo 0)
+    ts=$(date -r "$file" +%s 2>/dev/null || stat -c %Y "$file" 2>/dev/null || echo 0)
     age=$((now - ts))
     if (( age <= CACHE_TTL_SEC )); then
       cat "$file"
@@ -85,20 +93,47 @@ cache_put() {
 
 _http_get_with_headers() {
   local url="$1"
+  local attempt=0
 
-  local response headers body
-  response=$(curl -s -D - "$url")
-  headers=$(printf '%s\n' "$response" | sed '/^\r\{0,1\}$/q')
-  body=$(printf '%s\n' "$response" | sed '1,/^\r\{0,1\}$/d')
+  while (( attempt <= MAX_RETRIES )); do
+    local response headers body
+    response=$(curl -s -D - "$url")
+    headers=$(printf '%s\n' "$response" | sed '/^\r\{0,1\}$/q')
+    body=$(printf '%s\n' "$response" | sed '1,/^\r\{0,1\}$/d')
 
-  local remaining ttl
-  remaining=$(printf '%s\n' "$headers" | awk 'BEGIN{RS="\r\n"} /^X-Rl:/ {print $2}' || true)
-  ttl=$(printf '%s\n' "$headers" | awk 'BEGIN{RS="\r\n"} /^X-Ttl:/ {print $2}' || true)
-  if [[ -n "$remaining" || -n "$ttl" ]]; then
-    >&2 echo "[rate] X-Rl=${remaining:-?} X-Ttl=${ttl:-?}"
-  fi
+    local remaining ttl
+    remaining=$(printf '%s\n' "$headers" | awk 'BEGIN{RS="\r\n"} /^X-Rl:/ {print $2}' || true)
+    ttl=$(printf '%s\n' "$headers" | awk 'BEGIN{RS="\r\n"} /^X-Ttl:/ {print $2}' || true)
+    if [[ -n "$remaining" || -n "$ttl" ]]; then
+      >&2 echo "[rate] X-Rl=${remaining:-?} X-Ttl=${ttl:-?}"
+    fi
 
-  printf '%s\n' "$body"
+    local http_status
+    http_status=$(printf '%s\n' "$headers" | head -n 1 | awk '{print $2}' || true)
+
+    if [[ "$http_status" == "429" ]]; then
+      attempt=$((attempt + 1))
+      if (( attempt > MAX_RETRIES )); then
+        >&2 echo "[rate] HTTP 429 после $MAX_RETRIES попыток, сдаёмся"
+        printf '%s\n' "$body"
+        return 1
+      fi
+
+      local retry_after
+      retry_after=$(printf '%s\n' "$headers" | awk 'BEGIN{RS="\r\n"} tolower($0) ~ /^retry-after:/ {gsub(/[^0-9]/,"",$2); print $2; exit}' || true)
+      retry_after="${retry_after:-$DEFAULT_RETRY_AFTER}"
+      if (( retry_after > 60 )); then
+        retry_after=60
+      fi
+
+      >&2 echo "[rate] HTTP 429 — повтор $attempt/$MAX_RETRIES через ${retry_after}s..."
+      sleep "$retry_after"
+      continue
+    fi
+
+    printf '%s\n' "$body"
+    return 0
+  done
 }
 
 provider_request_raw() {
@@ -141,7 +176,10 @@ provider_request_with_cache() {
   fi
 
   local body
-  body=$(provider_request_raw "$query" "$lang")
+  if ! body=$(provider_request_raw "$query" "$lang"); then
+    >&2 echo "ERROR: запрос к провайдеру не удался"
+    return 1
+  fi
 
   if echo "$body" | jq -e 'type=="object"' >/dev/null 2>&1; then
     cache_put "$query" "$lang" "$body"
@@ -151,7 +189,7 @@ provider_request_with_cache() {
 }
 
 main() {
-  while [[ "${1:-}" == --* ]]; do
+  while [[ "${1:-}" == -* ]]; do
     case "$1" in
       --providers)
         providers_list
@@ -168,6 +206,17 @@ main() {
       --provider=*)
         PROVIDER="${1#*=}"
         ;;
+      --output|-o)
+        shift || true
+        OUTPUT_FILE="${1:-}"
+        if [[ -z "$OUTPUT_FILE" ]]; then
+          echo "ERROR: --output/-o требует путь к файлу" >&2
+          return 2
+        fi
+        ;;
+      --output=*)
+        OUTPUT_FILE="${1#*=}"
+        ;;
       --help|-h)
         usage
         return 0
@@ -183,12 +232,22 @@ main() {
   local cmd="${1:-lookup}"
   shift || true
 
-  case "$cmd" in
-    lookup) cmd_lookup "$@";;
-    json)   cmd_json "$@";;
-    file)   cmd_file "$@";;
-    http)   cmd_http "$@";;
-    help|-h|--help) usage;;
-    *) echo "Unknown command: $cmd"; usage; exit 1;;
-  esac
+  _dispatch_cmd() {
+    case "$1" in
+      lookup)  shift; cmd_lookup "$@";;
+      json)    shift; cmd_json "$@";;
+      file)    shift; cmd_file "$@";;
+      http)    shift; cmd_http "$@";;
+      reverse) shift; cmd_reverse "$@";;
+      scan)    shift; cmd_scan "$@";;
+      help|-h|--help) usage;;
+      *) echo "Unknown command: $1"; usage; exit 1;;
+    esac
+  }
+
+  if [[ -n "$OUTPUT_FILE" ]]; then
+    _dispatch_cmd "$cmd" "$@" | tee "$OUTPUT_FILE"
+  else
+    _dispatch_cmd "$cmd" "$@"
+  fi
 }

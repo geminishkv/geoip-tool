@@ -13,6 +13,7 @@ _cmd_http_help() {
   --path /путь            Путь запроса (по умолчанию /)
   --methods CSV           Список методов, напр. GET, HEAD, OPTIONS
   --aggressive            Использовать GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE, TRACE
+  --ports CSV             Порты для проверки, напр. 80,443,8080,8443
   --timeout SEC           Общий таймаут (по умолчанию 10)
   --connect-timeout SEC   Таймаут соединения (по умолчанию 5)
   --follow                Следовать редиректам (-L)
@@ -38,6 +39,7 @@ cmd_http() {
   local insecure="0"
   local aggressive="0"
   local all_headers="0"
+  local custom_ports=""
 
   local target=""
 
@@ -58,6 +60,7 @@ cmd_http() {
       --insecure) insecure="1"; shift ;;
       --aggressive) aggressive="1"; shift ;;
       --all-headers) all_headers="1"; shift ;;
+      --ports) shift; custom_ports="${1:-}"; shift ;;
       --)
         shift
         break
@@ -180,36 +183,87 @@ cmd_http() {
     done
   }
 
-  case "$mode" in
-    fixed)
-      _probe_one_url "$url" "$methods"
-      ;;
-    http)
-      _probe_one_url "$url_http" "$methods"
-      ;;
-    https)
-      _probe_one_url "$url_https" "$methods"
-      ;;
-    auto)
-      local rc
-      set +e
-      if [[ "$insecure" == "1" ]]; then
-        curl -sS -o /dev/null -I --max-time "$timeout" --connect-timeout "$ctimeout" -k "$url_https" >/dev/null 2>&1
-      else
-        curl -sS -o /dev/null -I --max-time "$timeout" --connect-timeout "$ctimeout" "$url_https" >/dev/null 2>&1
-      fi
-      rc=$?
-      set -e
+  _build_url_with_port() {
+    local scheme="$1" host="$2" port="$3" p="$4"
+    if [[ "$scheme" == "http" && "$port" == "80" ]] || \
+       [[ "$scheme" == "https" && "$port" == "443" ]]; then
+      echo "${scheme}://${host}${p}"
+    else
+      echo "${scheme}://${host}:${port}${p}"
+    fi
+  }
 
-      if [[ $rc -eq 0 ]]; then
-        _probe_one_url "$url_https" "$methods"
-      else
-        _probe_one_url "$url_http" "$methods"
+  _probe_auto() {
+    local url_h="$1" url_hs="$2"
+    local rc
+    set +e
+    if [[ "$insecure" == "1" ]]; then
+      curl -sS -o /dev/null -I --max-time "$timeout" --connect-timeout "$ctimeout" -k "$url_hs" >/dev/null 2>&1
+    else
+      curl -sS -o /dev/null -I --max-time "$timeout" --connect-timeout "$ctimeout" "$url_hs" >/dev/null 2>&1
+    fi
+    rc=$?
+    set -e
+    if [[ $rc -eq 0 ]]; then
+      _probe_one_url "$url_hs" "$methods"
+    else
+      _probe_one_url "$url_h" "$methods"
+    fi
+  }
+
+  if [[ -n "$custom_ports" ]]; then
+    # Extract bare hostname (strip any existing :port)
+    local bare_host="$target"
+    bare_host="${bare_host%%:*}"
+
+    IFS=',' read -r -a port_list <<< "$custom_ports"
+    for port in "${port_list[@]}"; do
+      port="$(echo "$port" | tr -d '[:space:]')"
+      [[ -z "$port" ]] && continue
+      if ! [[ "$port" =~ ^[0-9]+$ ]] || (( port < 1 || port > 65535 )); then
+        >&2 echo "WARNING: некорректный порт '$port', пропускаем"
+        continue
       fi
-      ;;
-    *)
-      echo "Внутренняя ошибка: неизвестный режим '$mode'"
-      return 2
-      ;;
-  esac
+
+      echo ""
+      echo "========== Порт $port =========="
+
+      case "$mode" in
+        fixed)
+          local scheme="${base_url%%://*}"
+          _probe_one_url "$(_build_url_with_port "$scheme" "$bare_host" "$port" "$path")" "$methods"
+          ;;
+        http)
+          _probe_one_url "$(_build_url_with_port "http" "$bare_host" "$port" "$path")" "$methods"
+          ;;
+        https)
+          _probe_one_url "$(_build_url_with_port "https" "$bare_host" "$port" "$path")" "$methods"
+          ;;
+        auto)
+          _probe_auto \
+            "$(_build_url_with_port "http"  "$bare_host" "$port" "$path")" \
+            "$(_build_url_with_port "https" "$bare_host" "$port" "$path")"
+          ;;
+      esac
+    done
+  else
+    case "$mode" in
+      fixed)
+        _probe_one_url "$url" "$methods"
+        ;;
+      http)
+        _probe_one_url "$url_http" "$methods"
+        ;;
+      https)
+        _probe_one_url "$url_https" "$methods"
+        ;;
+      auto)
+        _probe_auto "$url_http" "$url_https"
+        ;;
+      *)
+        echo "Внутренняя ошибка: неизвестный режим '$mode'"
+        return 2
+        ;;
+    esac
+  fi
 }
