@@ -10,8 +10,89 @@ DEFAULT_RETRY_AFTER=5
 PROVIDER_DEFAULT="${GEOIP_PROVIDER:-ip-api}"
 PROVIDER="$PROVIDER_DEFAULT"
 OUTPUT_FILE=""
+OUTPUT_FORMAT="pretty"
+
+# Цвета (отключаются через --no-color или NO_COLOR env)
+if [[ -z "${NO_COLOR:-}" ]] && [[ -t 1 ]]; then
+  C_RESET=$'\033[0m'
+  C_BOLD=$'\033[1m'
+  C_RED=$'\033[0;31m'
+  C_GREEN=$'\033[0;32m'
+  C_YELLOW=$'\033[0;33m'
+  C_CYAN=$'\033[0;36m'
+  C_DIM=$'\033[2m'
+else
+  C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW='' C_CYAN='' C_DIM=''
+fi
+
+_disable_colors() {
+  C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW='' C_CYAN='' C_DIM=''
+}
 
 mkdir -p "$CACHE_DIR"
+
+# Конфиг (~/.config/geoip-tool/config)
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/geoip-tool"
+CONFIG_FILE="$CONFIG_DIR/config"
+if [[ -f "$CONFIG_FILE" ]]; then
+  while IFS='=' read -r key value; do
+    [[ -z "$key" || "$key" == \#* ]] && continue
+    key=$(echo "$key" | tr -d '[:space:]')
+    value=$(echo "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    export "$key=$value" 2>/dev/null || true
+  done < "$CONFIG_FILE"
+fi
+
+cmd_config() {
+  local subcmd="${1:-}"
+
+  case "$subcmd" in
+    path)
+      echo "$CONFIG_FILE"
+      ;;
+    set)
+      local key="${2:-}"
+      local val="${3:-}"
+      if [[ -z "$key" || -z "$val" ]]; then
+        echo "Usage: geoip config set KEY VALUE" >&2
+        return 2
+      fi
+      mkdir -p "$CONFIG_DIR"
+      # Удалить старую запись если есть, добавить новую
+      if [[ -f "$CONFIG_FILE" ]]; then
+        local tmp
+        tmp=$(grep -v "^${key}=" "$CONFIG_FILE" 2>/dev/null || true)
+        printf '%s\n' "$tmp" > "$CONFIG_FILE"
+      fi
+      echo "${key}=${val}" >> "$CONFIG_FILE"
+      echo "OK: ${key} сохранён в $CONFIG_FILE"
+      ;;
+    "")
+      if [[ ! -f "$CONFIG_FILE" ]]; then
+        echo "Конфиг не найден: $CONFIG_FILE"
+        echo "Создайте через: geoip config set KEY VALUE"
+        return 0
+      fi
+      echo "=== $CONFIG_FILE ==="
+      while IFS='=' read -r key value; do
+        [[ -z "$key" || "$key" == \#* ]] && continue
+        key=$(echo "$key" | tr -d '[:space:]')
+        value=$(echo "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        # Маскируем значения ключей (показываем первые 3 символа)
+        if [[ ${#value} -gt 6 ]]; then
+          local masked="${value:0:3}***"
+        else
+          local masked="***"
+        fi
+        echo "$key=$masked"
+      done < "$CONFIG_FILE"
+      ;;
+    *)
+      echo "Usage: geoip config [set KEY VALUE | path]" >&2
+      return 2
+      ;;
+  esac
+}
 
 usage() {
   cat <<'EOF'
@@ -27,15 +108,18 @@ geoip - утилита для GeoIP-lookup и проверки целей
   --provider NAME          Выбрать провайдера (по умолчанию ip-api)
   --provider=NAME          Выбрать провайдера (по умолчанию ip-api)
   --output FILE, -o FILE   Сохранить вывод в файл (stdout дублируется)
+  --format FORMAT          Формат вывода: pretty, json, jsonl, csv, tsv
+  --no-color               Отключить цветной вывод
   -h, --help               Справка
 
 Команды:
   lookup [IP|host]         GeoIP (pretty). Если без аргумента — для текущего IP
   json   [IP|host]         Сырой JSON (удобно для jq/ пайплайнов)
-  file   <file>            Батч-lookup (по строке IP/ host на строку)
+  file   <file|->          Батч-lookup (по строке IP/ host на строку, - = stdin)
   http   [opts] <target>   Пробинг HTTP-методов (см. geoip http --help)
   reverse [opts] <IP>      Reverse IP lookup — домены на IP (см. geoip reverse --help)
   scan    [opts] <target>  nmap-сканирование портов (требует nmap, см. geoip scan --help)
+  config  [set KEY VAL]    Управление конфигом (~/.config/geoip-tool/config)
   help                     Показать справку
 
 Примеры:
@@ -206,6 +290,24 @@ main() {
       --provider=*)
         PROVIDER="${1#*=}"
         ;;
+      --no-color)
+        _disable_colors
+        ;;
+      --format)
+        shift || true
+        OUTPUT_FORMAT="${1:-pretty}"
+        case "$OUTPUT_FORMAT" in
+          pretty|json|jsonl|csv|tsv) ;;
+          *) echo "ERROR: неизвестный формат '$OUTPUT_FORMAT' (pretty, json, jsonl, csv, tsv)" >&2; return 2 ;;
+        esac
+        ;;
+      --format=*)
+        OUTPUT_FORMAT="${1#*=}"
+        case "$OUTPUT_FORMAT" in
+          pretty|json|jsonl|csv|tsv) ;;
+          *) echo "ERROR: неизвестный формат '$OUTPUT_FORMAT' (pretty, json, jsonl, csv, tsv)" >&2; return 2 ;;
+        esac
+        ;;
       --output|-o)
         shift || true
         OUTPUT_FILE="${1:-}"
@@ -240,6 +342,7 @@ main() {
       http)    shift; cmd_http "$@";;
       reverse) shift; cmd_reverse "$@";;
       scan)    shift; cmd_scan "$@";;
+      config)  shift; cmd_config "$@";;
       help|-h|--help) usage;;
       *) echo "Unknown command: $1"; usage; exit 1;;
     esac

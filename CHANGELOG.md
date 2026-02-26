@@ -95,6 +95,87 @@ geoip scan --nmap-args "-sV -O" target.com          # Доп. аргументы
 
 ---
 
+#### 6. Цветной вывод + `--no-color`
+ANSI-цвета для улучшения читаемости. Автоматическое отключение при пайпинге или перенаправлении.
+
+- Метки (`IP:`, `Страна:`, ...) — голубые
+- Булевые значения: `Да` — зелёный, `Нет` — приглушённый, `Неизвестно` — жёлтый
+- HTTP-статусы: 2xx — зелёный, 4xx — жёлтый, 5xx — красный
+- Заголовки секций (`===...===`) — жирный
+- Ошибки curl — красный
+
+Отключение цветов:
+```bash
+geoip --no-color lookup 8.8.8.8       # через флаг
+NO_COLOR=1 geoip lookup 8.8.8.8       # через env (стандарт no-color.org)
+geoip lookup 8.8.8.8 | cat            # автоотключение в пайпе
+```
+
+**Файлы:** `lib/geoip_core.sh`, `lib/geoip_lookup.sh`, `lib/geoip_http.sh`, `lib/geoip_reverse.sh`
+
+---
+
+#### 7. Stdin piping (`geoip file -`)
+Чтение списка IP/хостов из stdin для пайплайнов.
+
+```bash
+echo "8.8.8.8" | geoip file -
+cat ips.txt | geoip file -
+echo -e "8.8.8.8\n1.1.1.1" | geoip --format csv file -
+```
+
+- `geoip file -` — явное чтение из stdin
+- Автодетект stdin если аргумент не указан и stdin не терминал
+- Пропуск пустых строк и строк-комментариев (`#`)
+
+**Файлы:** `lib/geoip_lookup.sh`
+
+---
+
+#### 8. Конфиг-файл с API-ключами
+Хранение настроек и API-ключей в `~/.config/geoip-tool/config` (или `$XDG_CONFIG_HOME`).
+
+Формат файла (key=value):
+```bash
+# ~/.config/geoip-tool/config
+ABUSEIPDB_API_KEY=abc123
+SHODAN_API_KEY=def456
+GEOIP_PROVIDER=ip-api
+```
+
+Управление через подкоманду:
+```bash
+geoip config                           # показать конфиг (ключи замаскированы: abc***)
+geoip config path                      # путь к файлу конфига
+geoip config set SHODAN_API_KEY xyz    # записать ключ
+```
+
+Безопасность: файл парсится построчно (`KEY=VALUE`), без `source`.
+
+**Файлы:** `lib/geoip_core.sh`
+
+---
+
+#### 9. Экспорт в CSV / TSV / JSONL (`--format`)
+Глобальная опция `--format` для вывода в машиночитаемых форматах.
+
+```bash
+geoip --format csv lookup 8.8.8.8           # CSV (одна строка)
+geoip --format tsv lookup 8.8.8.8           # TSV (разделитель — табуляция)
+geoip --format jsonl lookup 8.8.8.8         # JSONL (компактный JSON)
+geoip --format json lookup 8.8.8.8          # Сырой JSON (аналог cmd json)
+geoip --format csv file ips.txt             # Batch CSV (заголовок + строки)
+echo "8.8.8.8" | geoip --format csv file - # CSV через stdin
+```
+
+Поддерживаемые форматы: `pretty` (по умолчанию), `json`, `jsonl`, `csv`, `tsv`.
+
+При batch-обработке (`file`) заголовок CSV/TSV печатается один раз.
+
+**Файлы:** `lib/geoip_core.sh`, `lib/geoip_lookup.sh`
+
+---
+
 ### Fixed
 
 #### Кросс-платформенная совместимость (Windows / Git Bash)
@@ -108,9 +189,10 @@ geoip scan --nmap-args "-sV -O" target.com          # Доп. аргументы
 
 | Файл | Тип | Описание |
 |------|-----|----------|
-| `lib/geoip_core.sh` | Изменён | --output/-o, retry 429, dispatch reverse/scan |
-| `lib/geoip_http.sh` | Изменён | --ports для HTTP пробинга |
-| `lib/geoip_reverse.sh` | Новый | Команда reverse (4 провайдера) |
+| `lib/geoip_core.sh` | Изменён | --output/-o, retry 429, цвета, --no-color, --format, config, dispatch |
+| `lib/geoip_lookup.sh` | Изменён | Цветной вывод, stdin piping, CSV/TSV/JSONL экспорт |
+| `lib/geoip_http.sh` | Изменён | --ports, цветные HTTP-статусы и заголовки |
+| `lib/geoip_reverse.sh` | Новый | Команда reverse (4 провайдера), цветные заголовки |
 | `lib/geoip_nmap.sh` | Новый | Команда scan (nmap интеграция) |
 | `bin/geoip` | Изменён | Подключение новых модулей |
 | `Makefile` | Изменён | Установка новых lib-файлов |

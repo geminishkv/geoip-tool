@@ -124,8 +124,8 @@ cmd_http() {
     local url="$1"
     local methods_csv="$2"
 
-    echo "[*] Проверка HTTP-методов: $url"
-    echo "[*] methods=$methods_csv timeout=${timeout}s connect-timeout=${ctimeout}s follow=$follow insecure=$insecure"
+    printf '%b\n' "${C_BOLD}[*] Проверка HTTP-методов: $url${C_RESET}"
+    printf '%b\n' "${C_DIM}[*] methods=$methods_csv timeout=${timeout}s connect-timeout=${ctimeout}s follow=$follow insecure=$insecure${C_RESET}"
     echo
 
     IFS=',' read -r -a mlist <<< "$methods_csv"
@@ -134,7 +134,7 @@ cmd_http() {
       method="$(echo "$method" | tr -d '[:space:]')"
       [[ -z "$method" ]] && continue
 
-      echo "===== $method ====="
+      printf '%b\n' "${C_BOLD}===== $method =====${C_RESET}"
 
       local tmp_headers rc out
       tmp_headers="$(mktemp)"
@@ -156,7 +156,19 @@ cmd_http() {
       h="$(tr -d '\r' < "$tmp_headers")"
 
       if [[ -n "$h" ]]; then
-        echo "$h" | head -n 1
+        local status_line
+        status_line=$(echo "$h" | head -n 1)
+        local code
+        code=$(echo "$status_line" | awk '{print $2}')
+        if [[ "$code" =~ ^2 ]]; then
+          printf '%b\n' "${C_GREEN}${status_line}${C_RESET}"
+        elif [[ "$code" =~ ^4 ]]; then
+          printf '%b\n' "${C_YELLOW}${status_line}${C_RESET}"
+        elif [[ "$code" =~ ^5 ]]; then
+          printf '%b\n' "${C_RED}${status_line}${C_RESET}"
+        else
+          echo "$status_line"
+        fi
 
         if [[ "$all_headers" == "1" ]]; then
           echo "$h" | sed '1d'
@@ -172,8 +184,8 @@ cmd_http() {
       fi
 
       if [[ $rc -ne 0 ]]; then
-        echo "Ошибка curl (exit code $rc)"
-        echo "curl stderr: $out"
+        printf '%b\n' "${C_RED}Ошибка curl (exit code $rc)${C_RESET}"
+        printf '%b\n' "${C_RED}curl stderr: $out${C_RESET}"
       else
         echo "$out"
       fi
@@ -226,7 +238,7 @@ cmd_http() {
       fi
 
       echo ""
-      echo "========== Порт $port =========="
+      printf '%b\n' "${C_BOLD}========== Порт $port ==========${C_RESET}"
 
       case "$mode" in
         fixed)

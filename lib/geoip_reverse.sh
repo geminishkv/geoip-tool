@@ -191,7 +191,7 @@ cmd_reverse() {
       if [[ "$json_mode" == "1" ]]; then
         printf '%s\n' "$domains" | jq -R -s 'split("\n") | map(select(length > 0))'
       else
-        echo "=== Reverse IP Lookup: $target (HackerTarget) ==="
+        printf '%b\n' "${C_BOLD}=== Reverse IP Lookup: $target (HackerTarget) ===${C_RESET}"
         if [[ -n "$domains" ]]; then
           printf '%s\n' "$domains"
         fi
@@ -203,7 +203,7 @@ cmd_reverse() {
       if [[ "$json_mode" == "1" ]]; then
         printf '%s\n' "$body"
       else
-        echo "=== Reverse IP Lookup: $target (Shodan InternetDB) ==="
+        printf '%b\n' "${C_BOLD}=== Reverse IP Lookup: $target (Shodan InternetDB) ===${C_RESET}"
         echo ""
         echo "Hostnames:"
         echo "$body" | jq -r '.hostnames[]? // empty' | sed 's/^/  /'
@@ -224,7 +224,7 @@ cmd_reverse() {
       if [[ "$json_mode" == "1" ]]; then
         printf '%s\n' "$body"
       else
-        echo "=== Reverse IP Lookup: $target (crt.sh Certificate Transparency) ==="
+        printf '%b\n' "${C_BOLD}=== Reverse IP Lookup: $target (crt.sh Certificate Transparency) ===${C_RESET}"
         echo ""
         echo "$body" | jq -r '.[].common_name // "-"' | sort -u
       fi
@@ -235,7 +235,7 @@ cmd_reverse() {
       if [[ "$json_mode" == "1" ]]; then
         printf '%s\n' "$result" | jq -R -s 'split("\n") | map(select(length > 0))'
       else
-        echo "=== Reverse IP Lookup: $target (PTR record) ==="
+        printf '%b\n' "${C_BOLD}=== Reverse IP Lookup: $target (PTR record) ===${C_RESET}"
         if [[ -n "$result" ]]; then
           printf '%s\n' "$result"
         fi
