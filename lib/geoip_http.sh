@@ -6,22 +6,7 @@ _cmd_http_help() {
   local gray=$'\033[38;5;245m'
   local reset=$'\033[0m'
 
-  local banner_top banner_bottom
-
-  # small poison ASCII (баннер)
-  banner_top=$'
-                                                                                         
- @@@@@@@  @@@@@@@@  @@@@@@  @@@ @@@@@@@     @@@@@@@  @@@@@@@@  @@@@@@@  @@@@@@  @@@  @@@ 
-!@@       @@!      @@!  @@@ @@! @@!  @@@    @@!  @@@ @@!      !@@      @@!  @@@ @@!@!@@@ 
-!@! @!@!@ @!!!:!   @!@  !@! !!@ @!@@!@!     @!@!!@!  @!!!:!   !@!      @!@  !@! @!@@!!@! 
-:!!   !!: !!:      !!:  !!! !!: !!:         !!: :!!  !!:      :!!      !!:  !!! !!:  !!! 
- :: :: :  : :: ::   : :. :  :    :           :   : : : :: ::   :: :: :  : :. :  ::    :  
-                                                                                         '
-
-  printf '%s\n' "$banner_top" \
-    | sed "s/^/${fg}/; s/$/${reset}/"
-
-  printf '\n'
+  local banner_bottom
 
   cat <<'EOF'
   geoip http [опции] <IP|host[:port]|http(s)://host[:port][/base]>
@@ -61,7 +46,6 @@ EOF
   printf '%s\n' "$banner_bottom" \
     | sed "s/^/${fg}/; s/$/${reset}/"
 
-  printf '\n%b%s%b\n' "$gray" "2026 Elijah S Shmakov (c) tool v.1.0" "$reset"
 }
 
 
