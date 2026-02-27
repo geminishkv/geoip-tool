@@ -139,7 +139,12 @@ cmd_http() {
       local tmp_headers rc out
       tmp_headers="$(mktemp)"
 
-      local curl_args=(-sS -o /dev/null -D "$tmp_headers" -w "$writeout" -X "$method" --max-time "$timeout" --connect-timeout "$ctimeout")
+      local curl_args=(-sS -D "$tmp_headers" -w "$writeout" --max-time "$timeout" --connect-timeout "$ctimeout")
+      if [[ "$method" == "HEAD" ]]; then
+        curl_args+=(-I -o /dev/null)
+      else
+        curl_args+=(-o /dev/null -X "$method")
+      fi
       [[ "$follow" == "1" ]] && curl_args+=(-L)
       [[ "$insecure" == "1" ]] && curl_args+=(-k)
 

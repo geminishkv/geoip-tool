@@ -94,7 +94,22 @@ cmd_config() {
   esac
 }
 
+_banner() {
+  printf '%b\n' "${C_CYAN}"
+  cat <<'LOGO'
+   ██████╗ ███████╗ ██████╗ ██╗██████╗
+  ██╔════╝ ██╔════╝██╔═══██╗██║██╔══██╗
+  ██║  ███╗█████╗  ██║   ██║██║██████╔╝
+  ██║   ██║██╔══╝  ██║   ██║██║██╔═══╝
+  ╚██████╔╝███████╗╚██████╔╝██║██║
+   ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝╚═╝
+LOGO
+  printf '%b\n' "  ${C_DIM}v1.0  ·  GeoIP Recon & OSINT Toolkit${C_RESET}"
+  echo ""
+}
+
 usage() {
+  _banner
   cat <<'EOF'
 geoip - утилита для GeoIP-lookup и проверки целей
 
@@ -119,6 +134,10 @@ geoip - утилита для GeoIP-lookup и проверки целей
   http   [opts] <target>   Пробинг HTTP-методов (см. geoip http --help)
   reverse [opts] <IP>      Reverse IP lookup — домены на IP (см. geoip reverse --help)
   scan    [opts] <target>  nmap-сканирование портов (требует nmap, см. geoip scan --help)
+  abuse   [opts] <IP>      Проверка IP через AbuseIPDB (см. geoip abuse --help)
+  whois   [opts] <IP|host> WHOIS lookup (см. geoip whois --help)
+  dns     [opts] <домен>   DNS-разведка (см. geoip dns --help)
+  recon   [opts] <target>  Полная разведка: lookup+reverse+dns+whois (см. geoip recon --help)
   config  [set KEY VAL]    Управление конфигом (~/.config/geoip-tool/config)
   help                     Показать справку
 
@@ -129,6 +148,8 @@ geoip - утилита для GeoIP-lookup и проверки целей
   geoip http --help
   geoip reverse 8.8.8.8
   geoip scan --top-ports 10 8.8.8.8
+  geoip recon 8.8.8.8
+  geoip dns --type MX google.com
 EOF
 }
 
@@ -342,6 +363,10 @@ main() {
       http)    shift; cmd_http "$@";;
       reverse) shift; cmd_reverse "$@";;
       scan)    shift; cmd_scan "$@";;
+      abuse)   shift; cmd_abuse "$@";;
+      whois)   shift; cmd_whois "$@";;
+      dns)     shift; cmd_dns "$@";;
+      recon)   shift; cmd_recon "$@";;
       config)  shift; cmd_config "$@";;
       help|-h|--help) usage;;
       *) echo "Unknown command: $1"; usage; exit 1;;

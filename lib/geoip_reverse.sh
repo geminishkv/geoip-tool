@@ -110,13 +110,14 @@ _reverse_ptr() {
     local result
     # Parse nslookup output: extract hostname from PTR response
     # Works on Linux ("name = dns.google") and Windows ("Name: dns.google" / localized)
-    result=$(nslookup "$ip" 2>/dev/null | awk '
+    result=$(LC_ALL=C nslookup "$ip" 2>/dev/null | tr -d '\r' | LC_ALL=C awk '
       /name =/ { sub(/\.$/,"",$NF); print $NF; found=1; exit }
       /^[[:space:]]*$/ { block++ }
       block>=1 && !found && /:[[:space:]]/ && !/[Aa]ddress/ {
         sub(/^[^:]*:[[:space:]]*/,""); gsub(/[[:space:]]*$/,"")
         sub(/\.$/,"")
-        if (length>0) { print; found=1; exit }
+        # Отбросим строки с non-ASCII (кириллические метки без значения)
+        if (length>0 && /^[a-zA-Z0-9._-]+$/) { print; found=1; exit }
       }
     ')
     if [[ -n "$result" ]]; then
@@ -237,7 +238,7 @@ cmd_reverse() {
       else
         printf '%b\n' "${C_BOLD}=== Reverse IP Lookup: $target (PTR record) ===${C_RESET}"
         if [[ -n "$result" ]]; then
-          printf '%s\n' "$result"
+          printf '%b\n' "${C_CYAN}PTR:${C_RESET}  $result"
         fi
       fi
       ;;
