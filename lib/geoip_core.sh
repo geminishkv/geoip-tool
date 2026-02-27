@@ -11,6 +11,27 @@ PROVIDER="$PROVIDER_DEFAULT"
 mkdir -p "$CACHE_DIR"
 
 usage() {
+  local fg=$'\033[38;5;117m'
+  local gray=$'\033[38;5;245m'
+  local reset=$'\033[0m'
+
+  local banner_top banner_bottom
+
+  # small poison ASCII (баннер)
+  banner_top=$'
+                                                                                         
+ @@@@@@@  @@@@@@@@  @@@@@@  @@@ @@@@@@@     @@@@@@@  @@@@@@@@  @@@@@@@  @@@@@@  @@@  @@@ 
+!@@       @@!      @@!  @@@ @@! @@!  @@@    @@!  @@@ @@!      !@@      @@!  @@@ @@!@!@@@ 
+!@! @!@!@ @!!!:!   @!@  !@! !!@ @!@@!@!     @!@!!@!  @!!!:!   !@!      @!@  !@! @!@@!!@! 
+:!!   !!: !!:      !!:  !!! !!: !!:         !!: :!!  !!:      :!!      !!:  !!! !!:  !!! 
+ :: :: :  : :: ::   : :. :  :    :           :   : : : :: ::   :: :: :  : :. :  ::    :  
+                                                                                         '
+
+  printf '%s\n' "$banner_top" \
+    | sed "s/^/${fg}/; s/$/${reset}/"
+
+  printf '\n'
+
   cat <<'EOF'
 geoip - утилита для GeoIP-lookup и проверки целей
 
@@ -38,6 +59,23 @@ geoip - утилита для GeoIP-lookup и проверки целей
   geoip --provider ipapi-co lookup 8.8.8.8
   geoip http --help
 EOF
+
+  banner_bottom=$'
+                                                                      
+ @@@@@@  @@@@@@@  @@@@@@@   @@@@@@ @@@@@@@@  @@@@@@@ @@@@@@@  @@@@@@  
+@@!  @@@ @@!  @@@ @@!  @@@ !@@     @@!      !@@        @!!   @@!  @@@ 
+@!@!@!@! @!@@!@!  @!@@!@!   !@@!!  @!!!:!   !@!        @!!   @!@!@!@! 
+!!:  !!! !!:      !!:          !:! !!:      :!!        !!:   !!:  !!! 
+ :   : :  :        :       ::.: :  : :: ::   :: :: :    :     :   : : 
+                                                                      
+                                                                      
+                                                     Sic Parvis Magna'
+
+  printf '%s\n' "$banner_bottom" \
+    | sed "s/^/${fg}/; s/$/${reset}/"
+
+  printf '\n%b%s%b\n' "$gray" "2026 Elijah S Shmakov (c) tool v.1.0" "$reset"
+
 }
 
 providers_list() {

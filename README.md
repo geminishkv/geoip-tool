@@ -1,4 +1,4 @@
-<div align="center"><h1><a id="intro"> GeoIP-lookup check for IP </a><br></h1></div>
+<div align="center"><h1><a id="intro"> GeoIP Recon </a><br></h1></div>
 
 ![Repo Size](https://img.shields.io/github/repo-size/geminishkv/geoip-tool)
 ![License](https://img.shields.io/github/license/geminishkv/geoip-tool)

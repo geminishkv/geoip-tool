@@ -2,11 +2,31 @@
 set -euo pipefail
 
 _cmd_http_help() {
+  local fg=$'\033[38;5;117m'
+  local gray=$'\033[38;5;245m'
+  local reset=$'\033[0m'
+
+  local banner_top banner_bottom
+
+  # small poison ASCII (баннер)
+  banner_top=$'
+                                                                                         
+ @@@@@@@  @@@@@@@@  @@@@@@  @@@ @@@@@@@     @@@@@@@  @@@@@@@@  @@@@@@@  @@@@@@  @@@  @@@ 
+!@@       @@!      @@!  @@@ @@! @@!  @@@    @@!  @@@ @@!      !@@      @@!  @@@ @@!@!@@@ 
+!@! @!@!@ @!!!:!   @!@  !@! !!@ @!@@!@!     @!@!!@!  @!!!:!   !@!      @!@  !@! @!@@!!@! 
+:!!   !!: !!:      !!:  !!! !!: !!:         !!: :!!  !!:      :!!      !!:  !!! !!:  !!! 
+ :: :: :  : :: ::   : :. :  :    :           :   : : : :: ::   :: :: :  : :. :  ::    :  
+                                                                                         '
+
+  printf '%s\n' "$banner_top" \
+    | sed "s/^/${fg}/; s/$/${reset}/"
+
+  printf '\n'
+
   cat <<'EOF'
-Использование:
   geoip http [опции] <IP|host[:port]|http(s)://host[:port][/base]>
 
-Опции:
+Флаги:
   --auto                  Сначала https, если не получилось — http
   --https                 Принудительно https
   --http                  Принудительно http
@@ -26,7 +46,24 @@ _cmd_http_help() {
   geoip http example.com --https --path /admin --aggressive
   geoip http https://example.com --methods GET,HEAD
 EOF
+
+  banner_bottom=$'
+                                                                      
+ @@@@@@  @@@@@@@  @@@@@@@   @@@@@@ @@@@@@@@  @@@@@@@ @@@@@@@  @@@@@@  
+@@!  @@@ @@!  @@@ @@!  @@@ !@@     @@!      !@@        @!!   @@!  @@@ 
+@!@!@!@! @!@@!@!  @!@@!@!   !@@!!  @!!!:!   !@!        @!!   @!@!@!@! 
+!!:  !!! !!:      !!:          !:! !!:      :!!        !!:   !!:  !!! 
+ :   : :  :        :       ::.: :  : :: ::   :: :: :    :     :   : : 
+                                                                      
+                                                                      
+                                                     Sic Parvis Magna'
+
+  printf '%s\n' "$banner_bottom" \
+    | sed "s/^/${fg}/; s/$/${reset}/"
+
+  printf '\n%b%s%b\n' "$gray" "2026 Elijah S Shmakov (c) tool v.1.0" "$reset"
 }
+
 
 cmd_http() {
   local mode="auto"
@@ -115,7 +152,7 @@ cmd_http() {
   fi
 
   local writeout
-  writeout=$'\n'": curl_http_code=%{http_code} remote_ip=%{remote_ip} local_ip=%{local_ip} time_total=%{time_total} num_redirects=%{num_redirects}"$'\n'
+  writeout=$'\n'"curl_http_code=%{http_code} remote_ip=%{remote_ip} local_ip=%{local_ip} time_total=%{time_total} num_redirects=%{num_redirects}"$'\n'
 
   _probe_one_url() {
     local url="$1"
