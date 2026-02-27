@@ -13,6 +13,7 @@ mkdir -p "$CACHE_DIR"
 usage() {
   local fg=$'\033[38;5;117m'
   local gray=$'\033[38;5;245m'
+  local blue=$'\033[0;34m'
   local reset=$'\033[0m'
 
   local banner_bottom
@@ -20,25 +21,25 @@ usage() {
   cat <<'EOF'
 geoip - утилита для GeoIP-lookup и проверки целей
 
-Использование:
+${blue}Использование:${reset}
   geoip [--provider NAME] <command> [args...]
   geoip --providers
   geoip --help
 
-Глобальные опции:
+${blue}Глобальные опции:${reset}
   --providers              Показать список провайдеров
   --provider NAME          Выбрать провайдера (по умолчанию ip-api)
   --provider=NAME          Выбрать провайдера (по умолчанию ip-api)
   -h, --help               Справка
 
-Команды:
+${blue}Команды:${reset}
   lookup [IP|host]         GeoIP (pretty). Если без аргумента — для текущего IP
   json   [IP|host]         Сырой JSON (удобно для jq/ пайплайнов)
   file   <file>            Батч-lookup (по строке IP/ host на строку)
   http   [opts] <target>   Пробинг HTTP-методов (см. geoip http --help)
   help                     Показать справку
 
-Примеры:
+${blue}Примеры:${reset}
   geoip lookup 8.8.8.8
   geoip json 1.1.1.1 | jq .
   geoip --provider ipapi-co lookup 8.8.8.8

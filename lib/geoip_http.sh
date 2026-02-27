@@ -3,6 +3,7 @@ set -euo pipefail
 
 _cmd_http_help() {
   local fg=$'\033[38;5;117m'
+  local blue=$'\033[0;34m'
   local gray=$'\033[38;5;245m'
   local reset=$'\033[0m'
 
@@ -11,7 +12,7 @@ _cmd_http_help() {
   cat <<'EOF'
   geoip http [опции] <IP|host[:port]|http(s)://host[:port][/base]>
 
-Флаги:
+${blue}Флаги:${reset}
   --auto                  Сначала https, если не получилось — http
   --https                 Принудительно https
   --http                  Принудительно http
@@ -25,7 +26,7 @@ _cmd_http_help() {
   --all-headers           Печатать все заголовки ответа
   -h, --help              Справка
 
-Примеры:
+${blue}Примеры:${reset}
   geoip http example.com
   geoip http --aggressive example.com
   geoip http example.com --https --path /admin --aggressive
