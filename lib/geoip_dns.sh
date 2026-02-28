@@ -45,9 +45,20 @@ _dns_query_nslookup() {
 
   case "$rtype" in
     A|AAAA)
-      nslookup -type="$rtype" "${args[@]}" 2>/dev/null \
-        | awk '/^(Address|Addresses)/ && !/^Addresses:/ {sub(/^[^:]+:[[:space:]]*/,""); if ($0 !~ /#/) print}' \
-        | tail -n +2 || true
+      LC_ALL=C nslookup -type="$rtype" "${args[@]}" 2>/dev/null | tr -d '\r' \
+        | awk '
+          BEGIN { section=0 }
+          /^$/ { section++; next }
+          section >= 1 && /^(Address|Addresses)[[:space:]]*:/ {
+            sub(/^[^:]+:[[:space:]]*/,"")
+            if ($0 != "") print
+            next
+          }
+          section >= 1 && /^[[:space:]]+[0-9a-fA-F.:]+/ {
+            sub(/^[[:space:]]+/,"")
+            print
+          }
+        ' || true
       ;;
     MX)
       nslookup -type=MX "${args[@]}" 2>/dev/null \
