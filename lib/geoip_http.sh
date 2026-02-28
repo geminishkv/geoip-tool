@@ -2,31 +2,33 @@
 set -euo pipefail
 
 _cmd_http_help() {
-  cat <<'EOF'
-Использование:
-  geoip http [опции] <IP|host[:port]|http(s)://host[:port][/base]>
+  _banner
+  printf "  ${C_DIM}Пробинг HTTP-методов на целевом хосте${C_RESET}\n"
 
-Опции:
-  --auto                  Сначала https, если не получилось — http
-  --https                 Принудительно https
-  --http                  Принудительно http
-  --path /путь            Путь запроса (по умолчанию /)
-  --methods CSV           Список методов, напр. GET, HEAD, OPTIONS
-  --aggressive            Использовать GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE, TRACE
-  --ports CSV             Порты для проверки, напр. 80,443,8080,8443
-  --timeout SEC           Общий таймаут (по умолчанию 10)
-  --connect-timeout SEC   Таймаут соединения (по умолчанию 5)
-  --follow                Следовать редиректам (-L)
-  --insecure              Разрешить небезопасный TLS (-k)
-  --all-headers           Печатать все заголовки ответа
-  -h, --help              Справка
+  _h "Использование"
+  _exm "geoip http [опции] <IP|host[:port]|http(s)://host[:port][/base]>"
 
-Примеры:
-  geoip http example.com
-  geoip http --aggressive example.com
-  geoip http example.com --https --path /admin --aggressive
-  geoip http https://example.com --methods GET,HEAD
-EOF
+  _h "Опции"
+  _opt "--auto" "Сначала https, если не получилось — http"
+  _opt "--https" "Принудительно https"
+  _opt "--http" "Принудительно http"
+  _opt "--path /путь" "Путь запроса (по умолчанию /)"
+  _opt "--methods CSV" "Список методов, напр. GET,HEAD,OPTIONS"
+  _opt "--aggressive" "GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE, TRACE"
+  _opt "--ports CSV" "Порты для проверки, напр. 80,443,8080,8443"
+  _opt "--timeout SEC" "Общий таймаут (по умолчанию 10)"
+  _opt "--connect-timeout SEC" "Таймаут соединения (по умолчанию 5)"
+  _opt "--follow" "Следовать редиректам (-L)"
+  _opt "--insecure" "Разрешить небезопасный TLS (-k)"
+  _opt "--all-headers" "Печатать все заголовки ответа"
+  _opt "-h, --help" "Справка"
+
+  _h "Примеры"
+  _exm "geoip http example.com"
+  _exm "geoip http --aggressive example.com"
+  _exm "geoip http --https --path /admin --aggressive example.com"
+  _exm "geoip http --ports 80,443,8080 example.com"
+  echo ""
 }
 
 cmd_http() {

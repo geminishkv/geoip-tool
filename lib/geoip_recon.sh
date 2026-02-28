@@ -2,32 +2,32 @@
 set -euo pipefail
 
 _cmd_recon_help() {
-  cat <<'EOF'
-Использование:
-  geoip recon [опции] <IP|домен>
+  _banner
+  printf "  ${C_DIM}Полная разведка цели — сбор информации из нескольких модулей${C_RESET}\n"
 
-Полная разведка цели — сбор информации из нескольких модулей одной командой.
+  _h "Использование"
+  _exm "geoip recon [опции] <IP|домен>"
 
-Опции:
-  --modules LIST    Модули через запятую (по умолчанию: lookup,reverse,dns,whois)
-  --full            Все модули (+ abuse, http)
-  --json            JSON вывод (объединённый)
-  -h, --help        Справка
+  _h "Опции"
+  _opt "--modules LIST" "Модули через запятую (по умолчанию: lookup,reverse,dns,whois)"
+  _opt "--full" "Все модули (+ abuse, http)"
+  _opt "--json" "JSON вывод (объединённый)"
+  _opt "-h, --help" "Справка"
 
-Доступные модули:
-  lookup    GeoIP lookup
-  reverse   Reverse IP (домены на IP)
-  dns       DNS-записи
-  whois     WHOIS информация
-  abuse     AbuseIPDB (требует API-ключ)
-  http      HTTP-пробинг методов
+  _h "Доступные модули"
+  _opt "lookup" "GeoIP lookup"
+  _opt "reverse" "Reverse IP (домены на IP)"
+  _opt "dns" "DNS-записи"
+  _opt "whois" "WHOIS информация"
+  _opt "abuse" "AbuseIPDB (требует API-ключ)"
+  _opt "http" "HTTP-пробинг методов"
 
-Примеры:
-  geoip recon 8.8.8.8
-  geoip recon --full 8.8.8.8
-  geoip recon --modules lookup,dns example.com
-  geoip recon --json 8.8.8.8
-EOF
+  _h "Примеры"
+  _exm "geoip recon 8.8.8.8"
+  _exm "geoip recon --full 8.8.8.8"
+  _exm "geoip recon --modules lookup,dns example.com"
+  _exm "geoip recon --json 8.8.8.8"
+  echo ""
 }
 
 cmd_recon() {

@@ -2,27 +2,26 @@
 set -euo pipefail
 
 _cmd_dns_help() {
-  cat <<'EOF'
-Использование:
-  geoip dns [опции] <домен>
+  _banner
+  printf "  ${C_DIM}DNS-разведка — запрос DNS-записей для домена${C_RESET}\n"
 
-DNS-разведка — запрос DNS-записей для домена.
+  _h "Использование"
+  _exm "geoip dns [опции] <домен>"
 
-Опции:
-  --type TYPE        Тип записи: A, AAAA, MX, NS, TXT, SOA, CNAME
-                     Без --type запрашиваются все основные типы
-  --nameserver NS    DNS-сервер для запросов (по умолчанию системный)
-  --short            Только значения, без заголовков
-  --json             JSON вывод
-  -h, --help         Справка
+  _h "Опции"
+  _opt "--type TYPE" "Тип: A, AAAA, MX, NS, TXT, SOA, CNAME (без --type = все)"
+  _opt "--nameserver NS" "DNS-сервер для запросов (по умолчанию системный)"
+  _opt "--short" "Только значения, без заголовков"
+  _opt "--json" "JSON вывод"
+  _opt "-h, --help" "Справка"
 
-Примеры:
-  geoip dns example.com
-  geoip dns --type MX google.com
-  geoip dns --type TXT example.com
-  geoip dns --nameserver 8.8.8.8 example.com
-  geoip dns --json example.com
-EOF
+  _h "Примеры"
+  _exm "geoip dns example.com"
+  _exm "geoip dns --type MX google.com"
+  _exm "geoip dns --type TXT example.com"
+  _exm "geoip dns --nameserver 8.8.8.8 example.com"
+  _exm "geoip dns --json example.com"
+  echo ""
 }
 
 _dns_query_dig() {

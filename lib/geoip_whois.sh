@@ -2,27 +2,27 @@
 set -euo pipefail
 
 _cmd_whois_help() {
-  cat <<'EOF'
-Использование:
-  geoip whois [опции] <IP|домен>
+  _banner
+  printf "  ${C_DIM}WHOIS lookup — информация о владельце IP-адреса или домена${C_RESET}\n"
 
-WHOIS lookup — информация о владельце IP-адреса или домена.
+  _h "Использование"
+  _exm "geoip whois [опции] <IP|домен>"
 
-Опции:
-  --raw             Полный raw-вывод whois
-  --json            JSON вывод (ARIN REST API, только для IP)
-  -h, --help        Справка
+  _h "Опции"
+  _opt "--raw" "Полный raw-вывод whois"
+  _opt "--json" "JSON вывод (ARIN REST API, только для IP)"
+  _opt "-h, --help" "Справка"
 
-Методы:
-  1. Системная команда whois (если установлена)
-  2. ARIN REST API (fallback для IP, без whois)
+  _h "Методы"
+  _opt "1. whois (CLI)" "Системная команда (если установлена)"
+  _opt "2. ARIN REST API" "Fallback для IP (без whois)"
 
-Примеры:
-  geoip whois 8.8.8.8
-  geoip whois --raw 8.8.8.8
-  geoip whois --json 8.8.8.8
-  geoip whois example.com
-EOF
+  _h "Примеры"
+  _exm "geoip whois 8.8.8.8"
+  _exm "geoip whois --raw 8.8.8.8"
+  _exm "geoip whois --json 8.8.8.8"
+  _exm "geoip whois example.com"
+  echo ""
 }
 
 _whois_cli() {

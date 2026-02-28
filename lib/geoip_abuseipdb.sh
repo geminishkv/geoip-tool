@@ -2,27 +2,27 @@
 set -euo pipefail
 
 _cmd_abuse_help() {
-  cat <<'EOF'
-Использование:
-  geoip abuse [опции] <IP>
+  _banner
+  printf "  ${C_DIM}Проверка IP через AbuseIPDB (репутация, жалобы, категории)${C_RESET}\n"
 
-Проверка IP через AbuseIPDB (репутация, жалобы, категории).
+  _h "Использование"
+  _exm "geoip abuse [опции] <IP>"
 
-Опции:
-  --days N          Период проверки в днях (по умолчанию 90)
-  --verbose         Показать последние репорты
-  --json            Вывод в JSON формате
-  -h, --help        Справка
+  _h "Опции"
+  _opt "--days N" "Период проверки в днях (по умолчанию 90)"
+  _opt "--verbose" "Показать последние репорты"
+  _opt "--json" "Вывод в JSON формате"
+  _opt "-h, --help" "Справка"
 
-Требуется API-ключ:
-  geoip config set ABUSEIPDB_API_KEY <ваш_ключ>
-  Получить бесплатно: https://www.abuseipdb.com/account/api
+  _h "API-ключ"
+  _exm "geoip config set ABUSEIPDB_API_KEY <ваш_ключ>"
+  _exm "Получить бесплатно: https://www.abuseipdb.com/account/api"
 
-Примеры:
-  geoip abuse 8.8.8.8
-  geoip abuse --verbose 185.220.101.1
-  geoip abuse --days 30 --json 8.8.8.8
-EOF
+  _h "Примеры"
+  _exm "geoip abuse 8.8.8.8"
+  _exm "geoip abuse --verbose 185.220.101.1"
+  _exm "geoip abuse --days 30 --json 8.8.8.8"
+  echo ""
 }
 
 cmd_abuse() {

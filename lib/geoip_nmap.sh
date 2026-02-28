@@ -2,30 +2,32 @@
 set -euo pipefail
 
 _cmd_scan_help() {
-  cat <<'EOF'
-Использование:
-  geoip scan [опции] <IP|host|CIDR>
+  _banner
+  printf "  ${C_DIM}nmap-сканирование портов на целевом хосте${C_RESET}\n"
 
-Опции:
-  --top-ports N            Сканировать N самых популярных портов (по умолчанию 100)
-  --ports PORTS            Указать порты вручную, напр. 22,80,443 или 1-1024
-  --scan-type TYPE         Тип сканирования: quick, full, stealth (по умолчанию quick)
-  --with-lookup            Выполнить GeoIP lookup для найденных IP
-  --nmap-args "ARGS"       Передать дополнительные аргументы nmap
-  --xml-output FILE        Сохранить XML-вывод nmap в файл
-  -h, --help               Справка
+  _h "Использование"
+  _exm "geoip scan [опции] <IP|host|CIDR>"
 
-Типы сканирования:
-  quick    -sT --top-ports N (TCP connect, быстро)
-  full     -sT -p- (все 65535 портов)
-  stealth  -sS --top-ports N (SYN scan, требует root/sudo)
+  _h "Опции"
+  _opt "--top-ports N" "Сканировать N популярных портов (по умолчанию 100)"
+  _opt "--ports PORTS" "Указать порты: 22,80,443 или 1-1024"
+  _opt "--scan-type TYPE" "Тип: quick, full, stealth (по умолчанию quick)"
+  _opt "--with-lookup" "Выполнить GeoIP lookup для найденных IP"
+  _opt "--nmap-args \"ARGS\"" "Передать доп. аргументы nmap"
+  _opt "--xml-output FILE" "Сохранить XML-вывод nmap в файл"
+  _opt "-h, --help" "Справка"
 
-Примеры:
-  geoip scan 192.168.1.0/24
-  geoip scan --scan-type stealth --top-ports 1000 target.com
-  geoip scan --with-lookup 8.8.8.8
-  geoip scan --ports 80,443,8080 example.com
-EOF
+  _h "Типы сканирования"
+  _opt "quick" "-sT --top-ports N (TCP connect, быстро)"
+  _opt "full" "-sT -p- (все 65535 портов)"
+  _opt "stealth" "-sS --top-ports N (SYN scan, требует root/sudo)"
+
+  _h "Примеры"
+  _exm "geoip scan 192.168.1.0/24"
+  _exm "geoip scan --scan-type stealth --top-ports 1000 target.com"
+  _exm "geoip scan --with-lookup 8.8.8.8"
+  _exm "geoip scan --ports 80,443,8080 example.com"
+  echo ""
 }
 
 cmd_scan() {

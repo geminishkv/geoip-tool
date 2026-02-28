@@ -4,28 +4,29 @@ set -euo pipefail
 REVERSE_PROVIDER="${GEOIP_REVERSE_PROVIDER:-hackertarget}"
 
 _cmd_reverse_help() {
-  cat <<'EOF'
-Использование:
-  geoip reverse [опции] <IP>
+  _banner
+  printf "  ${C_DIM}Reverse IP lookup — домены, привязанные к IP-адресу${C_RESET}\n"
 
-Опции:
-  --reverse-provider NAME   Провайдер для reverse lookup
-                            (hackertarget, shodan, crtsh, ptr)
-  --reverse-providers       Показать список провайдеров reverse lookup
-  --json                    Вывод в JSON формате
-  -h, --help                Справка
+  _h "Использование"
+  _exm "geoip reverse [опции] <IP>"
 
-Провайдеры:
-  hackertarget  (default)  HackerTarget API (20 запросов/день, без ключа)
-  shodan                   Shodan InternetDB (бесплатно, hostnames+ports+vulns)
-  crtsh                    crt.sh Certificate Transparency (SSL-сертификаты)
-  ptr                      DNS PTR запись (dig -x / nslookup, без внешнего API)
+  _h "Опции"
+  _opt "--reverse-provider NAME" "Провайдер (hackertarget, shodan, crtsh, ptr)"
+  _opt "--reverse-providers" "Показать список провайдеров"
+  _opt "--json" "Вывод в JSON формате"
+  _opt "-h, --help" "Справка"
 
-Примеры:
-  geoip reverse 8.8.8.8
-  geoip reverse --reverse-provider shodan 1.1.1.1
-  geoip reverse --json 8.8.8.8
-EOF
+  _h "Провайдеры"
+  _opt "hackertarget (default)" "HackerTarget API (20 запр./день, без ключа)"
+  _opt "shodan" "Shodan InternetDB (бесплатно, hostnames+ports+vulns)"
+  _opt "crtsh" "crt.sh Certificate Transparency (SSL-сертификаты)"
+  _opt "ptr" "DNS PTR запись (dig -x / nslookup, без API)"
+
+  _h "Примеры"
+  _exm "geoip reverse 8.8.8.8"
+  _exm "geoip reverse --reverse-provider shodan 1.1.1.1"
+  _exm "geoip reverse --json 8.8.8.8"
+  echo ""
 }
 
 _reverse_providers_list() {

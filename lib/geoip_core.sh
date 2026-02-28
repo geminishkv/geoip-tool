@@ -20,13 +20,14 @@ if [[ -z "${NO_COLOR:-}" ]] && [[ -t 1 ]]; then
   C_GREEN=$'\033[0;32m'
   C_YELLOW=$'\033[0;33m'
   C_CYAN=$'\033[0;36m'
+  C_MAGENTA=$'\033[0;35m'
   C_DIM=$'\033[2m'
 else
-  C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW='' C_CYAN='' C_DIM=''
+  C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW='' C_CYAN='' C_MAGENTA='' C_DIM=''
 fi
 
 _disable_colors() {
-  C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW='' C_CYAN='' C_DIM=''
+  C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW='' C_CYAN='' C_MAGENTA='' C_DIM=''
 }
 
 mkdir -p "$CACHE_DIR"
@@ -97,60 +98,90 @@ cmd_config() {
 _banner() {
   printf '%b\n' "${C_CYAN}"
   cat <<'LOGO'
-   ██████╗ ███████╗ ██████╗ ██╗██████╗
-  ██╔════╝ ██╔════╝██╔═══██╗██║██╔══██╗
-  ██║  ███╗█████╗  ██║   ██║██║██████╔╝
-  ██║   ██║██╔══╝  ██║   ██║██║██╔═══╝
-  ╚██████╔╝███████╗╚██████╔╝██║██║
-   ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝╚═╝
+   ██████╗ ███████╗ ██████╗ ██╗██████╗     ██████╗ ███████╗ ██████╗ ██████╗ ███╗   ██╗
+  ██╔════╝ ██╔════╝██╔═══██╗██║██╔══██╗    ██╔══██╗██╔════╝██╔════╝██╔═══██╗████╗  ██║
+  ██║  ███╗█████╗  ██║   ██║██║██████╔╝    ██████╔╝█████╗  ██║     ██║   ██║██╔██╗ ██║
+  ██║   ██║██╔══╝  ██║   ██║██║██╔═══╝     ██╔══██╗██╔══╝  ██║     ██║   ██║██║╚██╗██║
+  ╚██████╔╝███████╗╚██████╔╝██║██║         ██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║
+   ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝╚═╝         ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝
 LOGO
   printf '%b\n' "  ${C_DIM}v1.0  ·  GeoIP Recon & OSINT Toolkit${C_RESET}"
   echo ""
 }
 
+_footer() {
+  printf '%b\n' "${C_CYAN}"
+  cat <<'LOGO'
+   █████╗ ██████╗ ██████╗ ███████╗███████╗ ██████╗████████╗ █████╗
+  ██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝╚══██╔══╝██╔══██╗
+  ███████║██████╔╝██████╔╝███████╗█████╗  ██║        ██║   ███████║
+  ██╔══██║██╔═══╝ ██╔═══╝ ╚════██║██╔══╝  ██║        ██║   ██╔══██║
+  ██║  ██║██║     ██║     ███████║███████╗╚██████╗   ██║   ██║  ██║
+  ╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚══════╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝
+LOGO
+  printf '%b\n' "${C_RESET}"
+}
+
+# Хелперы для стилизации --help
+_h() {
+  printf '\n%b\n' "${C_MAGENTA}━━━ $1 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+}
+
+_opt() {
+  printf "  ${C_CYAN}%-27s${C_RESET} %s\n" "$1" "$2"
+}
+
+_exm() {
+  printf "  ${C_DIM}%s${C_RESET}\n" "$1"
+}
+
 usage() {
   _banner
-  cat <<'EOF'
-geoip - утилита для GeoIP-lookup и проверки целей
+  printf "  ${C_DIM}geoip - утилита для GeoIP-lookup и проверки целей${C_RESET}\n"
 
-Использование:
-  geoip [--provider NAME] [--output FILE] <command> [args...]
-  geoip --providers
-  geoip --help
+  _h "Использование"
+  _exm "geoip [--provider NAME] [--output FILE] <command> [args...]"
+  _exm "geoip --providers"
+  _exm "geoip --help"
 
-Глобальные опции:
-  --providers              Показать список провайдеров
-  --provider NAME          Выбрать провайдера (по умолчанию ip-api)
-  --provider=NAME          Выбрать провайдера (по умолчанию ip-api)
-  --output FILE, -o FILE   Сохранить вывод в файл (stdout дублируется)
-  --format FORMAT          Формат вывода: pretty, json, jsonl, csv, tsv
-  --no-color               Отключить цветной вывод
-  -h, --help               Справка
+  _h "Глобальные опции"
+  _opt "--providers" "Показать список провайдеров"
+  _opt "--provider NAME" "Выбрать провайдера (по умолчанию ip-api)"
+  _opt "--output FILE, -o FILE" "Сохранить вывод в файл (stdout дублируется)"
+  _opt "--format FORMAT" "Формат: pretty, json, jsonl, csv, tsv"
+  _opt "--no-color" "Отключить цветной вывод"
+  _opt "-h, --help" "Справка"
 
-Команды:
-  lookup [IP|host]         GeoIP (pretty). Если без аргумента — для текущего IP
-  json   [IP|host]         Сырой JSON (удобно для jq/ пайплайнов)
-  file   <file|->          Батч-lookup (по строке IP/ host на строку, - = stdin)
-  http   [opts] <target>   Пробинг HTTP-методов (см. geoip http --help)
-  reverse [opts] <IP>      Reverse IP lookup — домены на IP (см. geoip reverse --help)
-  scan    [opts] <target>  nmap-сканирование портов (требует nmap, см. geoip scan --help)
-  abuse   [opts] <IP>      Проверка IP через AbuseIPDB (см. geoip abuse --help)
-  whois   [opts] <IP|host> WHOIS lookup (см. geoip whois --help)
-  dns     [opts] <домен>   DNS-разведка (см. geoip dns --help)
-  recon   [opts] <target>  Полная разведка: lookup+reverse+dns+whois (см. geoip recon --help)
-  config  [set KEY VAL]    Управление конфигом (~/.config/geoip-tool/config)
-  help                     Показать справку
+  _h "Lookup & Export"
+  _opt "lookup [IP|host]" "GeoIP lookup (без аргумента — текущий IP)"
+  _opt "json   [IP|host]" "Сырой JSON (для jq / пайплайнов)"
+  _opt "file   <file|->" "Батч-lookup (IP/host на строку, - = stdin)"
 
-Примеры:
-  geoip lookup 8.8.8.8
-  geoip json 1.1.1.1 | jq .
-  geoip --provider ipapi-co lookup 8.8.8.8
-  geoip http --help
-  geoip reverse 8.8.8.8
-  geoip scan --top-ports 10 8.8.8.8
-  geoip recon 8.8.8.8
-  geoip dns --type MX google.com
-EOF
+  _h "Network & Recon"
+  _opt "http   [opts] <target>" "Пробинг HTTP-методов (см. geoip http --help)"
+  _opt "reverse [opts] <IP>" "Reverse IP lookup (см. geoip reverse --help)"
+  _opt "scan   [opts] <target>" "nmap-сканирование (см. geoip scan --help)"
+  _opt "recon  [opts] <target>" "Полная разведка (см. geoip recon --help)"
+
+  _h "OSINT"
+  _opt "abuse  [opts] <IP>" "AbuseIPDB (см. geoip abuse --help)"
+  _opt "whois  [opts] <IP|host>" "WHOIS lookup (см. geoip whois --help)"
+  _opt "dns    [opts] <домен>" "DNS-разведка (см. geoip dns --help)"
+
+  _h "Утилиты"
+  _opt "config [set KEY VAL]" "Управление конфигом и API-ключами"
+  _opt "help" "Показать справку"
+
+  _h "Примеры"
+  _exm "geoip lookup 8.8.8.8"
+  _exm "geoip json 1.1.1.1 | jq ."
+  _exm "geoip --format csv file ips.txt"
+  _exm "geoip http --aggressive example.com"
+  _exm "geoip recon --full 8.8.8.8"
+  _exm "geoip dns --type MX google.com"
+  _exm "geoip abuse --verbose 185.220.101.1"
+  echo ""
+  _footer
 }
 
 providers_list() {
