@@ -1,5 +1,71 @@
 # Release Notes
 
+## v1.2.0
+
+### Общий пул проведенных работ
+
+* Добавлена новая команда `asn` — определение автономной системы по IP или номеру ASN
+* Интеграция с публичным API RIPE Stat (без ключей, без регистрации)
+* Модуль `asn` интегрирован в `recon --full`
+* Реализованы подкоманды `asn peers` и `asn prefix` для BGP-разведки
+
+### Следующие команды были добавлены:
+
+* **Security & OSINT**
+  * `asn [info]` — ASN lookup через RIPE Stat: holder, тип AS, prefix, анонсируемые префиксы
+  * `asn peers` — BGP-соседи: upstream, downstream, uncertain с power-рейтингом
+  * `asn prefix` — BGP routing status: visibility, first/last seen, RPKI валидация
+
+### Следующие улучшения внесены в существующие команды:
+
+* `recon` — модуль `asn` добавлен в список доступных модулей и в `--full`
+* `recon` — поддержка `asn` в JSON-режиме (`--json`)
+
+### Изменённые файлы
+
+| Файл | Тип | Описание |
+|------|-----|----------|
+| `lib/geoip_asn.sh` | Новый | Команда `asn` с подкомандами info, peers, prefix (RIPE Stat API) |
+| `lib/geoip_core.sh` | Изменён | Dispatch + help для команды `asn` |
+| `lib/geoip_recon.sh` | Изменён | Модуль `asn` в recon (pretty + json) |
+| `bin/geoip` | Изменён | Подключение нового модуля |
+
+### Примеры использования
+
+```bash
+# ASN lookup по IP (info по умолчанию)
+geoip asn 8.8.8.8
+
+# ASN lookup по номеру
+geoip asn info AS15169
+
+# BGP-соседи
+geoip asn peers AS15169
+geoip asn peers 8.8.8.8
+
+# Routing status + RPKI
+geoip asn prefix 8.8.8.8
+geoip asn prefix AS13335
+
+# JSON вывод (работает для всех подкоманд)
+geoip asn --json 1.1.1.1
+geoip asn --json peers AS15169
+geoip asn --json prefix 8.8.8.8
+
+# В составе полной разведки
+geoip recon --full 8.8.8.8
+```
+
+### Дополнение
+
+* Команда `asn` использует публичный API RIPE Stat — не требует API-ключей и регистрации
+* Подкоманда `peers` показывает до 20 соседей в каждой группе (upstream/downstream/uncertain), отсортированных по power
+* Подкоманда `prefix` показывает routing visibility (IPv4/IPv6), RPKI статус (Valid/Invalid), first/last seen
+* Принимает как IP-адрес, так и номер ASN (с префиксом `AS` или без)
+* Обратная совместимость: `geoip asn <target>` работает как раньше (= `info`)
+
+---
+
 ## v1.1.0
 
 ### Общий пул проведенных работ

@@ -167,6 +167,7 @@ usage() {
   _opt "abuse  [opts] <IP>" "AbuseIPDB (см. geoip abuse --help)"
   _opt "whois  [opts] <IP|host>" "WHOIS lookup (см. geoip whois --help)"
   _opt "dns    [opts] <домен>" "DNS-разведка (см. geoip dns --help)"
+  _opt "asn    [opts] <IP|ASN>" "ASN lookup через RIPE Stat (см. geoip asn --help)"
 
   _h "Утилиты"
   _opt "config [set KEY VAL]" "Управление конфигом и API-ключами"
@@ -397,6 +398,7 @@ main() {
       abuse)   shift; cmd_abuse "$@";;
       whois)   shift; cmd_whois "$@";;
       dns)     shift; cmd_dns "$@";;
+      asn)     shift; cmd_asn "$@";;
       recon)   shift; cmd_recon "$@";;
       config)  shift; cmd_config "$@";;
       help|-h|--help) usage;;

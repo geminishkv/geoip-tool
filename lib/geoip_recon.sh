@@ -19,6 +19,7 @@ _cmd_recon_help() {
   _opt "reverse" "Reverse IP (домены на IP)"
   _opt "dns" "DNS-записи"
   _opt "whois" "WHOIS информация"
+  _opt "asn" "ASN lookup (RIPE Stat)"
   _opt "abuse" "AbuseIPDB (требует API-ключ)"
   _opt "http" "HTTP-пробинг методов"
 
@@ -43,7 +44,7 @@ cmd_recon() {
         ;;
       --modules)  shift; modules="${1:-lookup,reverse,dns,whois}"; shift ;;
       --modules=*) modules="${1#*=}"; shift ;;
-      --full)     modules="lookup,reverse,dns,whois,abuse,http"; shift ;;
+      --full)     modules="lookup,reverse,dns,whois,asn,abuse,http"; shift ;;
       --json)     json_mode=1; shift ;;
       --)         shift; break ;;
       --*)
@@ -107,6 +108,12 @@ cmd_recon() {
         printf '%b\n' "${C_BOLD}▶ WHOIS${C_RESET}"
         echo ""
         set +e; cmd_whois "$target"; set -e
+        echo ""
+        ;;
+      asn)
+        printf '%b\n' "${C_BOLD}▶ ASN Lookup (RIPE Stat)${C_RESET}"
+        echo ""
+        set +e; cmd_asn "$target"; set -e
         echo ""
         ;;
       abuse)
@@ -184,6 +191,14 @@ _recon_json() {
         set -e
         if echo "$mod_output" | jq -e 'type=="object"' >/dev/null 2>&1; then
           result=$(echo "$result" | jq --argjson v "$mod_output" '. + {whois: $v}')
+        fi
+        ;;
+      asn)
+        set +e
+        mod_output=$(cmd_asn --json "$target" 2>/dev/null)
+        set -e
+        if echo "$mod_output" | jq -e 'type=="object"' >/dev/null 2>&1; then
+          result=$(echo "$result" | jq --argjson v "$mod_output" '. + {asn: $v}')
         fi
         ;;
       abuse)

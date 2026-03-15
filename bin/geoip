@@ -11,6 +11,7 @@ source "$BASE_DIR/lib/geoip_nmap.sh"
 source "$BASE_DIR/lib/geoip_abuseipdb.sh"
 source "$BASE_DIR/lib/geoip_whois.sh"
 source "$BASE_DIR/lib/geoip_dns.sh"
+source "$BASE_DIR/lib/geoip_asn.sh"
 source "$BASE_DIR/lib/geoip_recon.sh"
 
 main "$@"
